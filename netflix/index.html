@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="lt">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Netflix, antras bandymas – elgsenos strategijos simuliacija</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap&subset=latin-ext" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+:root{
+  --bg:#E9EEF3; --surface:#FFFFFF; --ink:#18212F; --muted:#5A6577; --line:#CBD3DE;
+  --signal:#E2A11B; --signal-ink:#3A2700; --ok:#17756E; --bias:#C2412F; --soft:#F4F7FA;
+  --display:"Unbounded","Arial Black",system-ui,sans-serif;
+  --body:"IBM Plex Sans","Segoe UI",system-ui,-apple-system,sans-serif;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#121822; --surface:#1B2330; --ink:#E7ECF2; --muted:#9AA6B8; --line:#2E3A4C;
+    --signal:#F0B43A; --signal-ink:#1E1400; --ok:#3FB3A8; --bias:#E9725F; --soft:#222C3B;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#121822; --surface:#1B2330; --ink:#E7ECF2; --muted:#9AA6B8; --line:#2E3A4C;
+  --signal:#F0B43A; --signal-ink:#1E1400; --ok:#3FB3A8; --bias:#E9725F; --soft:#222C3B;
+}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:17px;line-height:1.55;-webkit-text-size-adjust:100%}
+h1,h2,h3{font-family:var(--display);font-weight:700;line-height:1.15;margin:0 0 .5em;letter-spacing:-.01em}
+h1{font-size:clamp(1.6rem,6vw,2.6rem)}
+h2{font-size:clamp(1.25rem,4.5vw,1.7rem)}
+h3{font-size:1.05rem;font-weight:500}
+p{margin:0 0 .9em}
+small,.muted{color:var(--muted)}
+button,input,select{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--signal);outline-offset:2px}
+.wrap{max-width:640px;margin:0 auto;padding:20px 18px 64px}
+.wide{max-width:1180px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:20px;margin:0 0 16px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:.4em;min-height:48px;padding:.7em 1.3em;border-radius:999px;border:2px solid var(--ink);background:var(--ink);color:var(--surface);font-weight:600;cursor:pointer}
+.btn.ghost{background:transparent;color:var(--ink)}
+.btn.block{width:100%}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.row{display:flex;gap:12px;flex-wrap:wrap}
+label.field{display:block;margin:0 0 14px}
+label.field span{display:block;font-weight:600;margin-bottom:4px}
+input[type=text],input[type=number],select{width:100%;min-height:48px;padding:.6em .8em;border:1.5px solid var(--line);border-radius:10px;background:var(--soft)}
+.opt{display:block;position:relative;border:1.5px solid var(--line);border-radius:12px;padding:12px 14px 12px 46px;margin:0 0 10px;background:var(--soft);cursor:pointer}
+.opt input{position:absolute;left:14px;top:15px;width:20px;height:20px;accent-color:var(--ink)}
+.opt b{display:block}
+.opt:has(input:checked){border-color:var(--ink);background:var(--surface)}
+.opt small{display:block}
+.gauge{display:flex;align-items:center;gap:10px;margin:6px 0}
+.gauge .bar{flex:1;height:10px;border-radius:5px;background:var(--line);overflow:hidden}
+.gauge .bar i{display:block;height:100%;background:var(--ok)}
+.stepper{display:flex;gap:6px;margin:0 0 18px}
+.stepper i{flex:1;height:6px;border-radius:3px;background:var(--line)}
+.stepper i.on{background:var(--signal)}
+.stepper i.done{background:var(--ink)}
+.tag{display:inline-block;white-space:nowrap;font-size:.8rem;font-weight:600;padding:.15em .6em;border-radius:6px;background:var(--soft);border:1px solid var(--line)}
+.tag.bias{color:var(--bias);border-color:var(--bias)}
+.tag.ok{color:var(--ok);border-color:var(--ok)}
+.score{font-family:var(--display);font-size:3rem;line-height:1}
+.theory{border-left:4px solid var(--signal);padding:4px 0 4px 16px;margin:18px 0}
+.theory h3{margin-bottom:.3em}
+.theory ul{margin:.3em 0 .6em;padding-left:1.1em}
+.theory li{margin:.25em 0}
+.cite{font-size:.85rem;color:var(--muted)}
+.dots{display:grid;grid-template-columns:repeat(20,1fr);gap:4px;margin:12px 0}
+.dots i{aspect-ratio:1;border-radius:50%;background:var(--line)}
+.dots i.r{background:var(--ok)}
+.dots i.s{background:var(--signal)}
+.ci{position:relative;height:56px;margin:18px 0 6px;border-bottom:1.5px solid var(--line)}
+.ci .zero{position:absolute;top:0;bottom:0;width:2px;background:var(--bias)}
+.ci .rng{position:absolute;top:22px;height:12px;border-radius:6px;background:var(--signal)}
+.ci .pt{position:absolute;top:16px;width:4px;height:24px;background:var(--ink);border-radius:2px}
+.refset{display:flex;align-items:flex-end;gap:5px;height:120px;margin:12px 0 4px}
+.refset i{flex:1;background:var(--ok);border-radius:3px 3px 0 0;position:relative}
+.refset i.anchor{background:var(--bias)}
+.code{font-family:var(--display);font-size:clamp(1.6rem,8vw,2.4rem);letter-spacing:.04em;text-align:center;padding:18px;border:2px dashed var(--ink);border-radius:14px;margin:12px 0}
+.hero{padding:28px 0 8px}
+.hero .lede{font-size:1.1rem;max-width:60ch}
+.grid2{display:grid;grid-template-columns:1fr;gap:16px}
+@media (min-width:900px){.grid2{grid-template-columns:360px 1fr}}
+#qr{background:#fff;padding:14px;border-radius:12px;display:inline-block}
+#qr img,#qr canvas{display:block;width:100%;max-width:300px;height:auto}
+table{width:100%;border-collapse:collapse}
+.tablewrap{overflow-x:auto}
+th,td{text-align:left;padding:8px 6px;border-bottom:1px solid var(--line);vertical-align:middle}
+th{font-size:.85rem;color:var(--muted);font-weight:600}
+.stack{display:flex;height:16px;border-radius:4px;overflow:hidden;min-width:160px;background:var(--line)}
+.stack i{display:block;height:100%}
+.legend{display:flex;flex-wrap:wrap;gap:10px;font-size:.85rem;color:var(--muted);margin:8px 0}
+.legend span::before{content:"";display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;background:var(--c)}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 12px}
+.tabs button{border:1.5px solid var(--line);background:var(--soft);border-radius:999px;padding:.4em 1em;cursor:pointer}
+.tabs button[aria-selected=true]{background:var(--ink);color:var(--surface);border-color:var(--ink)}
+.err{color:var(--bias);font-weight:600}
+.hidden{display:none!important}
+@media (prefers-reduced-motion:no-preference){.reveal{animation:rv .35s ease-out}@keyframes rv{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}}
+
+.kpis{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin:10px 0}
+@media (min-width:700px){.kpis{grid-template-columns:repeat(4,1fr)}}
+.kpi{background:var(--soft);border:1px solid var(--line);border-radius:12px;padding:12px}
+.kpi b{display:block;font-family:var(--display);font-size:1.5rem;line-height:1.1}
+.kpi span{font-size:.85rem;color:var(--muted)}
+.hbars{margin:8px 0}
+.hbar{display:grid;grid-template-columns:minmax(7em,40%) 1fr 3.2em;gap:8px;align-items:center;margin:6px 0;font-size:.95rem}
+.hbar .t{height:14px;border-radius:7px;background:var(--line);overflow:hidden}
+.hbar .t i{display:block;height:100%;background:var(--ink)}
+.hbar.hl .t i{background:var(--signal)}
+.hbar b{text-align:right}
+.funnel{margin:10px 0}
+.funnel div{margin:4px auto;padding:9px 12px;border-radius:8px;background:var(--ink);color:var(--surface);display:flex;justify-content:space-between;gap:10px;font-size:.95rem}
+.funnel div.lo{background:var(--bias)}
+.vbars{display:flex;align-items:flex-end;gap:12px;height:150px;margin:14px 0 4px}
+.vbars div{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%}
+.vbars i{display:block;width:100%;background:var(--ink);border-radius:4px 4px 0 0}
+.vbars small{margin-top:4px}
+.vbars em{font-style:normal;font-weight:600;font-size:.85rem;margin-bottom:3px}
+.matrix{display:grid;grid-template-columns:auto 1fr 1fr;gap:6px;font-size:.9rem;margin:10px 0}
+.matrix > div{background:var(--soft);border:1px solid var(--line);border-radius:8px;padding:8px;min-height:64px}
+.matrix > .ax{background:none;border:none;color:var(--muted);font-size:.8rem;min-height:0;display:flex;align-items:center}
+details.byla{background:var(--surface);border:1px solid var(--line);border-radius:14px;margin:0 0 16px}
+details.byla summary{cursor:pointer;padding:14px 20px;font-weight:600;list-style:none}
+details.byla summary::before{content:"+ ";color:var(--signal)}
+details.byla[open] summary::before{content:"– "}
+details.byla > div{padding:0 20px 16px}
+.slides{position:relative}
+.slide{min-height:min(70vh,640px);display:flex;flex-direction:column;justify-content:center}
+.slide h1{font-size:clamp(1.8rem,4vw,3.2rem)}
+.slide .big{font-size:clamp(1.1rem,2vw,1.45rem);max-width:46ch}
+.slidenav{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:14px}
+.quote{font-family:var(--display);font-weight:500;font-size:clamp(1.1rem,2.4vw,1.6rem);line-height:1.3;border-left:4px solid var(--bias);padding-left:16px;margin:16px 0}
+</style>
+
+<style>
+textarea{width:100%;min-height:84px;padding:.6em .8em;border:1.5px solid var(--line);border-radius:10px;background:var(--soft);font:inherit;color:inherit;resize:vertical}
+.opt.multi{padding-left:46px}
+.resgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:10px 0}
+.quoteslist p{border-left:3px solid var(--signal);padding-left:10px;margin:0 0 10px}
+</style>
+</head>
+<body>
+<main id="app" class="wrap"></main>
+<script>
+"use strict";
+const RELAY="https://ntfy.sh/";
+const QS=new URLSearchParams(location.search);
+const SESSION=QS.get("s");
+const BASE_URL=location.origin+location.pathname;
+const ON_GH=/github\.io$/.test(location.hostname);
+const ART_URL="https://claude.ai/artifact/GcNAszQ9Kn2BhKKukCnsVV";
+function relaySend(evt){if(!SESSION)return;try{fetch(RELAY+SESSION,{method:"POST",body:JSON.stringify(evt)}).catch(()=>{})}catch(e){}}
+const $=s=>document.querySelector(s);
+const app=$("#app");
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const nf=n=>Math.round(n).toLocaleString("lt-LT");
+const uid=()=>Math.random().toString(36).slice(2,10);
+const store={get(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}},del(k){try{localStorage.removeItem(k)}catch(e){}}};
+const radios=(name,arr)=>arr.map(([v,t,s])=>`<label class="opt"><input type="radio" name="${name}" value="${v}"><b>${t}</b>${s?`<small>${s}</small>`:""}</label>`).join("");
+const checks=(name,arr)=>arr.map(([v,t,s])=>`<label class="opt multi"><input type="checkbox" name="${name}" value="${v}"><b>${t}</b>${s?`<small>${s}</small>`:""}</label>`).join("");
+const val=n=>(document.querySelector(`input[name="${n}"]:checked`)||{}).value;
+const vals=n=>[...document.querySelectorAll(`input[name="${n}"]:checked`)].map(x=>x.value);
+const COLORS=["#2F6FB0","#17756E","#E2A11B","#C2412F","#7A4FB5","#3F8F3A"];
+
+/* ===== Žingsniai ===== */
+const STEPS=[
+ {id:"d",title:"Diagnozė",max:20,part:1},
+ {id:"p",title:"Sprendimo procesas",max:15,part:2},
+ {id:"a",title:"Alternatyvos",max:15,part:2},
+ {id:"k",title:"Kliento elgsena",max:20,part:2},
+ {id:"t",title:"Išbandymas",max:15,part:2},
+ {id:"s",title:"Saugikliai",max:15,part:2}];
+
+/* ===== Atvejis (patikrinti faktai) ===== */
+const SRC="Šaltiniai: Associated Press, 2011-10-25; Home Media Magazine, 2011-09-19; R. Hastings, E. Meyer. No Rules Rules, 2020.";
+function caseBox(){return `
+ <div class="panel"><h3>Netflix 2011 m.</h3>
+ <p>Netflix nuomoja DVD paštu ir sparčiai plečia srautinę paslaugą. Abi paslaugos – viename plane, už apie 10 $ per mėnesį. Vadovas Reedas Hastingsas įsitikinęs, kad DVD nuoma pasmerkta, o ateitis – srautinė paslauga.</p></div>
+ <div class="panel"><h3>Sprendimas</h3>
+ <p><b>Liepa.</b> Paslaugos atskiriamos į du planus; abiejų paslaugų kaina pakyla iki 60 %: nuo 10 iki 16 $.</p>
+ <p><b>Rugsėjo 18 d.</b> Hastingsas atsiprašo už tai, kaip pokytis paskelbtas, ir praneša: DVD nuoma taps atskira įmone „Qwikster“ su atskira svetaine ir paskyra.</p>
+ <p><b>Spalio pradžia.</b> „Qwikster“ atšaukiamas, nauja kaina paliekama.</p></div>
+ <div class="panel"><h3>Rezultatas</h3>
+ <div class="kpis"><div class="kpi"><b>−800 000</b><span>JAV prenumeratorių per III ketvirtį (iki 23,8 mln.)</span></div><div class="kpi"><b>−600 000</b><span>tiek bendrovė prognozavo rugsėjį</span></div><div class="kpi"><b>300 $ → 77 $</b><span>akcijos kaina per 3,5 mėnesio</span></div><div class="kpi"><b>„arrogance“</b><span>„I slid into arrogance based upon past success“ – Hastingsas</span></div></div>
+ <p class="cite">${SRC}</p></div>`}
+function bylaBox(){return `<details class="byla"><summary>Atvejo byla</summary><div>${caseBox()}</div></details>`}
+
+/* ===== Teorija ir aptarimas ===== */
+const THEORY={
+d:`<h3>Ką rodo diagnozė</h3><ul><li><b>Per didelis pasitikėjimas</b> – sėkmės istorija tampa įrodymu, kad ir kitas sprendimas bus teisingas.</li><li><b>Vadovo nuomonės efektas ir grupinis mąstymas</b> – abejonės buvo, bet nenuskambėjo garsiai.</li><li><b>Planavimo klaida</b> – net ir pripažinus problemą, nuostoliai vis tiek įvertinti per optimistiškai.</li><li><b>Per siauras rėmas</b> – svarstytas vienas kelias: staigus atskyrimas.</li><li><b>Kliento nuostolių vengimas</b> – klientai patyrė pokytį kaip praradimą, o ne kaip naujas galimybes.</li></ul>`,
+p:`<h3>Procesas svarbesnis už analizę</h3><p>Lovallo ir Sibony tyrime proceso kokybė paaiškino šešis kartus daugiau sprendimų rezultatų sklaidos nei analizė. Premortem, raudonoji komanda ir nepriklausomi vertinimai – būdai išgirsti abejones, kol dar ne vėlu.</p>`,
+a:`<h3>Mažiausiai trys alternatyvos</h3><p>Per siauras rėmas – „daryti ar nedaryti“ – yra viena dažniausių strateginių klaidų. Kriterijai, sutarti prieš renkantis, saugo nuo to, kad laimėtų garsiausias balsas.</p>`,
+k:`<h3>Kliento elgsena: COM-B ir EAST</h3><p>Kai keičiama paslauga, klientui svarbiausia – ką jis praranda. Numatytosios parinktys, išankstinis įspėjimas, viena paskyra ir naudos rėminimas sumažina praradimo jausmą, nekeisdami paties tikslo.</p>`,
+t:`<h3>Išbandyti prieš paleidžiant visiems</h3><p>Bandymas su dalimi klientų ir aiškus rodiklis – atsisakiusių prenumeratorių dalis – leidžia pamatyti reakciją, kol klaidą dar galima ištaisyti pigiai.</p>`,
+s:`<h3>Saugikliai</h3><p>Iš anksto sutarta sustabdymo taisyklė apsaugo nuo įsipareigojimo eskalacijos: sprendimas peržiūrimas ne todėl, kad kažkas išdrįso, o todėl, kad suveikė taisyklė.</p>`};
+const REAL_CHANGE=`<h3>Ką Netflix pakeitė iš tikrųjų</h3><p>Hastingso ir Meyer knygoje <i>No Rules Rules</i> (2020) aprašyta po šios krizės įvesta praktika – prieš didelius sprendimus sąmoningai rinkti prieštaraujančias nuomones („farming for dissent“). Palyginkite su komandų sprendimo procesais.</p>`;
+
+/* ===== 1 dalis: diagnozė ===== */
+const FACTS=[
+ ["f1","„I slid into arrogance based upon past success“, – rašė Hastingsas klientams."],
+ ["f2","Pasak vėliau kalbintų darbuotojų, dalis vadovų abejojo perėjimo tempu, bet sprendimas priimtas be tikros diskusijos."],
+ ["f3","Rugsėjį bendrovė prognozavo netekti 600 000 prenumeratorių. Neteko apie 800 000."],
+ ["f4","Svarstytas vienas kelias – staigus atskyrimas ir nauja kaina visiems iš karto."],
+ ["f5","Klientai pokytį priėmė kaip netektį: ta pati paslauga – iki 60 % brangiau ir dvi paskyros vietoj vienos."]];
+const BIASES=[["over","Per didelis pasitikėjimas"],["group","Vadovo nuomonės efektas, grupinis mąstymas"],["plan","Planavimo klaida"],["frame","Per siauras rėmas"],["loss","Nuostolių vengimas (kliento)"],["sunk","Nesusigrąžinami kaštai"]];
+const KEY_D={f1:"over",f2:"group",f3:"plan",f4:"frame",f5:"loss"};
+
+/* ===== 2 dalis: kūrimas ===== */
+const TOOLS=[["pre","Premortem","Prieš paskelbiant: „Įsivaizduokite, kad žlugo. Kodėl?“"],["red","Raudonoji komanda","Paskirti žmonės gina priešingą poziciją"],["ind","Nepriklausomi vertinimai prieš diskusiją","Kiekvienas užsirašo savo vertinimą"],["q12","12 klausimų kontrolinis sąrašas","Prieš tvirtinant rekomendaciją"],["anon","Anoniminis balsavimas",""],["ceo","Galutinį sprendimą priima vadovas vienas","Greita ir aišku"]];
+const PATHS=[["split","Staigus atskyrimas ir nauja kaina visiems","Kaip realybėje"],["grad","Palaipsnis perėjimas","Naujiems klientams numatytasis – srautinis planas; esami išlaiko derinį metus"],["newonly","Nauja kaina tik naujiems klientams","Esamiems kaina nekinta"],["oneacc","Du planai, bet viena paskyra ir viena svetainė","Kaina keičiasi visiems"],["close","Uždaryti DVD nuomą","Visi perkeliami į srautinį planą"],["none","Nieko nekeisti","Laukti, kol DVD nuoma nyks pati"]];
+const CURVE={split:800,grad:260,newonly:160,oneacc:520,close:2000,none:60};
+const PACE={split:"greitas",grad:"vidutinis",newonly:"lėtas",oneacc:"greitas",close:"labai greitas",none:"nėra"};
+const K={
+ bar:[["C","Gebėjimas: klientai nesupras, kaip naudotis dviem paslaugomis"],["O","Galimybė: reikės dviejų paskyrų ir dviejų mokėjimų"],["M","Motyvacija: kaina ir praradimo jausmas"]],
+ def:[["keep","Esami klientai pagal nutylėjimą lieka savo plane, perėjimas – jų pasirinkimu",0.7],["auto","Visi automatiškai perkeliami į naują planą",1.15],["force","Visi privalo pasirinkti iš naujo",1.25]],
+ frame:[["gain","„Naujas pigesnis planas tiems, kas žiūri tik internetu“","Nauda",0.85],["neutral","„Keičiasi kainos ir planai“","Neutralu",1.0],["loss","„Kad ir toliau gautumėte DVD, reikės mokėti daugiau“","Praradimas",1.15]],
+ time:[["notice","Pranešti prieš 60 dienų, su aiškiu paaiškinimu",0.8],["now","Įsigalioja iškart",1.2]],
+ acc:[["one","Viena paskyra ir viena svetainė",0.85],["two","Dvi atskiros paskyros",1.3]]};
+const TEST=[["pilot","Bandymas su daliai klientų (keli regionai), tik tada – visiems",0.7],["survey","Klientų apklausa prieš paleidžiant",0.92],["none","Paleisti visiems iš karto",1.0]];
+const METRIC=[["churn","Atsisakiusių prenumeratorių dalis"],["rev","Pajamos per mėnesį"],["stock","Akcijos kaina"]];
+const STOP=[["x15","Jei atsisakymai 1,5 karto viršija prognozę – stabdome ir peržiūrime",0.75],["x3","Jei atsisakymai 3 kartus viršija prognozę",0.92],["none","Sustabdymo taisyklės nenustatome",1.0]];
+
+/* ===== Komandos būsena ===== */
+const KEY="nflx-sim-v1"+(SESSION?"-"+SESSION:"");
+let S=store.get(KEY,null);
+const save=()=>store.set(KEY,S);
+function report(k,extra){relaySend(Object.assign({id:S.id,n:S.team,r:S.step,k,sc:S.scores},extra||{}))}
+function stepper(){return `<div class="stepper">${STEPS.map((r,i)=>`<i class="${i<S.step?"done":i===S.step?"on":""}"></i>`).join("")}</div>`}
+function head(i){const st=STEPS[i];return `${stepper()}<p class="muted" style="margin:0">${st.part===1?"1 dalis · Kodėl nepasiteisino":`2 dalis · Jūsų strategija · ${i} iš 5`}</p><h2>${st.title}</h2>${bylaBox()}`}
+const why=(id,ph)=>`<label class="field"><span>Kodėl taip? <small class="muted">(trumpai; dėstytojas matys ekrane)</small></span><textarea id="${id}" maxlength="280" placeholder="${ph}"></textarea></label>`;
+function done(i,score,data,html){
+ S.scores[i]=score;S.data[STEPS[i].id]=data;save();report("choice",{r:i,d:data,s:score});
+ app.innerHTML=`<div class="reveal">${stepper()}<div class="panel"><p class="muted" style="margin:0">${STEPS[i].title}</p><div class="score">${score}<small style="font-size:1rem"> / ${STEPS[i].max}</small></div></div>
+ ${html?`<div class="panel">${html}</div>`:""}<div class="panel theory">${THEORY[STEPS[i].id]}</div>
+ <button class="btn block" id="next">${i<5?"Toliau":"Pamatyti strategijos rezultatą"}</button></div>`;
+ $("#next").onclick=()=>{S.step=i+1;save();play()};window.scrollTo(0,0);
+}
+
+function home(){
+ app.className="wrap";
+ app.innerHTML=`<section class="hero reveal"><h1>Netflix, antras bandymas</h1>
+ <p class="lede">2011 m. Netflix strategija nepasiteisino. Jūsų komanda pirmiausia išsiaiškins kodėl, o tada sukurs strategiją, kuri būtų pavykusi.</p></section>
+ <div class="panel"><h2>Esu komandoje</h2>
+ ${SESSION?'<p><span class="tag ok">prisijungta prie paskaitos</span> Dėstytojas matys jūsų sprendimus ir argumentus.</p>':'<p class="muted">Vienas telefonas komandai. Aptarkite kartu, įveskite – vienas.</p>'}
+ <label class="field"><span>Komandos pavadinimas</span><input id="tname" type="text" maxlength="24" autocomplete="off"></label>
+ <button class="btn block" id="start">Pradėti</button>
+ ${S?`<p style="margin-top:12px"><button class="btn ghost block" id="cont">Tęsti: ${esc(S.team)}</button></p>`:""}</div>
+ ${SESSION?"":`<p style="text-align:center"><button class="btn ghost" id="fac">Dėstytojo ekranas</button></p>`}`;
+ $("#start").onclick=()=>{const n=$("#tname").value.trim();if(!n){$("#tname").focus();$("#tname").style.borderColor="var(--bias)";return}
+  S={id:uid(),team:n,step:0,scores:[null,null,null,null,null,null],data:{}};save();report("join");intro()};
+ if(S)$("#cont").onclick=play;
+ if($("#fac"))$("#fac").onclick=facilitator;
+}
+function intro(){app.innerHTML=`<div class="reveal"><h2>Atvejis</h2>${caseBox()}<button class="btn block" id="go">Į 1 dalį: kodėl nepasiteisino</button></div>`;$("#go").onclick=play;window.scrollTo(0,0)}
+function play(){while(S.step<6&&S.scores[S.step]!=null){S.step++;save()}if(S.step>=6)return finish();[sd,sp,sa,sk,st,ss][S.step]();window.scrollTo(0,0)}
+
+function sd(){
+ app.innerHTML=`<div class="reveal">${head(0)}<div class="panel"><p>Prie kiekvieno fakto priskirkite šališkumą, kuris jį geriausiai paaiškina.</p>
+ ${FACTS.map(([id,t])=>`<label class="field"><span>${t}</span><select id="${id}"><option value="">Pasirinkite šališkumą</option>${BIASES.map(([b,bt])=>`<option value="${b}">${bt}</option>`).join("")}</select></label>`).join("")}
+ <p id="e" class="err hidden">Priskirkite šališkumą kiekvienam faktui.</p><button class="btn block" id="ok">Pateikti diagnozę</button></div></div>`;
+ $("#ok").onclick=()=>{const m={};FACTS.forEach(([id])=>m[id]=$("#"+id).value);if(Object.values(m).some(x=>!x)){$("#e").classList.remove("hidden");return}
+  const hits=FACTS.filter(([id])=>KEY_D[id]===m[id]).length;
+  done(0,hits*4,{m,hits},`<p>Teisingai priskirta: <b>${hits} iš 5</b>.</p>${FACTS.map(([id,t])=>`<p>${m[id]===KEY_D[id]?'<span class="tag ok">taip</span>':'<span class="tag bias">kitaip</span>'} ${t.slice(0,60)}… → <b>${BIASES.find(b=>b[0]===KEY_D[id])[1]}</b></p>`).join("")}<p class="muted">Šios klaidos – jūsų strategijos saugiklių sąrašas 2 dalyje.</p>`);
+ };
+}
+function sp(){
+ app.innerHTML=`<div class="reveal">${head(1)}<div class="panel"><p><b>2011 m. pavasaris.</b> Jūs – Netflix vadovų komanda. Tikslas tas pats: pereiti nuo DVD prie srautinės paslaugos ir neprarasti klientų.</p><p>Kaip priimsite sprendimą? Pasirinkite visus įrankius, kuriuos įtrauksite.</p>${checks("tools",TOOLS)}
+ ${why("w","Pvz.: premortem, nes 1 dalyje matėme, kad abejonės nebuvo išsakytos…")}
+ <p id="e" class="err hidden">Pasirinkite bent vieną įrankį.</p><button class="btn block" id="ok">Patvirtinti procesą</button></div></div>`;
+ $("#ok").onclick=()=>{const t=vals("tools");if(!t.length){$("#e").classList.remove("hidden");return}
+  const good=t.filter(x=>x!=="ceo").length;let sc=clamp(good*4,0,15);if(t.includes("ceo"))sc=Math.max(0,sc-6);
+  done(1,sc,{t,w:$("#w").value.trim()},t.includes("ceo")?'<p><span class="tag bias">rizika</span> Jei vadovas sprendžia vienas, kiti įrankiai virsta formalumu – būtent tai nutiko 2011 m.</p>':'<p><span class="tag ok">procesas</span> Sprendimą tikrins ne vienas žmogus.</p>');
+ };
+}
+function sa(){
+ app.innerHTML=`<div class="reveal">${head(2)}<div class="panel"><p>Pažymėkite bent <b>tris</b> alternatyvas, kurias rimtai svarstysite.</p>${checks("alt",PATHS)}</div>
+ <div class="panel"><p>Kurią renkatės?</p><div id="finalbox">${radios("fin",PATHS)}</div>
+ ${why("w","Kokiais kriterijais remiatės? Pvz.: perėjimo tempas, prarandami klientai, pajamos…")}
+ <p id="e" class="err hidden">Pažymėkite bent tris alternatyvas ir pasirinkite vieną iš jų.</p><button class="btn block" id="ok">Pasirinkti kelią</button></div></div>`;
+ $("#ok").onclick=()=>{const alt=vals("alt"),fin=val("fin");if(alt.length<3||!fin||!alt.includes(fin)){$("#e").classList.remove("hidden");return}
+  const w=$("#w").value.trim();let sc=6+(w.length>=20?4:0)+({grad:5,newonly:4,oneacc:3,split:0,close:0,none:1}[fin]);
+  done(2,clamp(sc,0,15),{alt,fin,w},`<p>Pasirinktas kelias: <b>${PATHS.find(p=>p[0]===fin)[1]}</b>. ${fin==="split"?'<span class="tag bias">tas pats kelias</span> Tai sprendimas, kuris 2011 m. nepasiteisino. Pažiūrėsime, ar jūsų elgsenos dizainas ir saugikliai jį išgelbės.':fin==="none"?'<span class="tag bias">status quo</span> Prarandate mažai klientų, bet strateginis tikslas – perėjimas – nepasiekiamas.':'<span class="tag ok">alternatyva</span>'}</p>`);
+ };
+}
+function sk(){
+ app.innerHTML=`<div class="reveal">${head(3)}<div class="panel"><h3>Diagnozė pagal COM-B</h3><p>Kas labiausiai trukdys klientams priimti pokytį?</p>${radios("bar",K.bar)}</div>
+ <div class="panel"><h3>Numatytoji parinktis</h3>${radios("def",K.def)}</div>
+ <div class="panel"><h3>Rėminimas</h3>${radios("frame",K.frame)}</div>
+ <div class="panel"><h3>Laikas</h3>${radios("time",K.time)}</div>
+ <div class="panel"><h3>Trintis</h3>${radios("acc",K.acc)}
+ ${why("w","Kaip klientas patirs šį pokytį? Kas jam atrodys kaip praradimas?")}
+ <p id="e" class="err hidden">Pasirinkite po vieną kiekvienoje grupėje.</p><button class="btn block" id="ok">Patvirtinti dizainą</button></div></div>`;
+ $("#ok").onclick=()=>{const c={bar:val("bar"),def:val("def"),frame:val("frame"),time:val("time"),acc:val("acc")};if(Object.values(c).some(x=>!x)){$("#e").classList.remove("hidden");return}
+  let sc=(c.bar==="M"?4:2)+({keep:5,auto:2,force:0}[c.def])+({gain:4,neutral:2,loss:0}[c.frame])+(c.time==="notice"?4:0)+(c.acc==="one"?3:0);
+  done(3,clamp(sc,0,20),Object.assign(c,{w:$("#w").value.trim()}),`<p>${c.bar==="M"?'<span class="tag ok">tikslus</span> Pagrindinė kliūtis – motyvacija: kaina ir praradimo jausmas.':'<span class="tag">dalinai</span> Kliūtis egzistuoja, bet 2011 m. lemiama buvo motyvacija: kaina ir praradimo jausmas.'}</p>`);
+ };
+}
+function st(){
+ app.innerHTML=`<div class="reveal">${head(4)}<div class="panel"><h3>Kaip išbandysite?</h3>${radios("test",TEST)}</div>
+ <div class="panel"><h3>Pagal kokį rodiklį spręsite, ar pavyko?</h3>${radios("met",METRIC)}
+ ${why("w","Kokį rezultatą laikysite sėkme?")}
+ <p id="e" class="err hidden">Pasirinkite abu.</p><button class="btn block" id="ok">Patvirtinti</button></div></div>`;
+ $("#ok").onclick=()=>{const test=val("test"),met=val("met");if(!test||!met){$("#e").classList.remove("hidden");return}
+  const sc=({pilot:9,survey:4,none:0}[test])+({churn:6,rev:2,stock:0}[met]);
+  done(4,sc,{test,met,w:$("#w").value.trim()},`<p>${met==="stock"?'<span class="tag bias">ne ta metrika</span> Akcijos kaina reaguoja į daug ką ir per vėlai parodo kliento reakciją.':met==="rev"?'<span class="tag bias">apgaulinga metrika</span> Pajamos gali augti net prarandant klientus – kaina pakelta.':'<span class="tag ok">tikroji metrika</span> Atsisakymai tiesiogiai rodo, kaip klientai priima pokytį.'}</p>`);
+ };
+}
+function ss(){
+ app.innerHTML=`<div class="reveal">${head(5)}<div class="panel"><h3>Sustabdymo taisyklė</h3>${radios("stop",STOP)}
+ ${why("w","Kas tiksliai įvyks, kai taisyklė suveiks? Kas peržiūrės sprendimą?")}
+ <p id="e" class="err hidden">Pasirinkite taisyklę.</p><button class="btn block" id="ok">Patvirtinti strategiją</button></div></div>`;
+ $("#ok").onclick=()=>{const stop=val("stop");if(!stop){$("#e").classList.remove("hidden");return}
+  const w=$("#w").value.trim();const sc=({x15:11,x3:6,none:0}[stop])+(w.length>=20?4:0);
+  done(5,clamp(sc,0,15),{stop,w},stop==="none"?'<p><span class="tag bias">eskalacijos rizika</span> Be taisyklės sprendimas peržiūrimas tik tada, kai kas nors išdrįsta.</p>':'<p><span class="tag ok">saugiklis</span> Peržiūrą įjungs taisyklė, ne drąsa.</p>');
+ };
+}
+function checksum(a){const c="ABCDEFGHJKLMNPRSTUVZ23456789";let s=7;a.forEach((v,i)=>s=(s*31+v*(i+3))%c.length);return c[s]}
+function codeOf(sc,loss){const a=sc.map(v=>v||0).concat([Math.min(99,Math.round(loss/10000))]);return a.map(v=>String(v).padStart(2,"0")).join("-")+"-"+checksum(a)}
+/* ===== Rezultato modelis (mokomasis) ===== */
+function outcome(d){
+ const a=d.a||{},k=d.k||{},t=d.t||{},s=d.s||{};
+ let loss=CURVE[a.fin]||800;
+ const f=(arr,v)=>((arr.find(x=>x[0]===v)||[])[2]||1);
+ if(a.fin!=="none"){loss*= (K.def.find(x=>x[0]===k.def)||[0,0,1])[2]*(K.frame.find(x=>x[0]===k.frame)||[0,0,0,1])[3]*(K.time.find(x=>x[0]===k.time)||[0,0,1])[2]*(K.acc.find(x=>x[0]===k.acc)||[0,0,1])[2]}
+ let tf=f(TEST,t.test);if(t.test==="pilot"&&t.met!=="churn")tf=0.85;loss*=tf;loss*=f(STOP,s.stop);
+ loss=Math.round(loss/10)*10*1000;
+ return {loss,pace:PACE[a.fin]||"–"};
+}
+function finish(){
+ const sc=S.scores.map(v=>v||0),tot=sc.reduce((a,b)=>a+b,0),o=outcome(S.data);
+ if(!S.sent){S.sent=1;save();report("done",{o})}
+ app.innerHTML=`<div class="reveal"><h2>${esc(S.team)}: ${tot} / 100</h2>
+ <div class="panel"><h3>Jūsų strategijos rezultatas modelyje</h3>
+ <div class="resgrid"><div class="kpi"><b>−${nf(o.loss)}</b><span>prarastų JAV prenumeratorių</span></div><div class="kpi"><b>−800 000</b><span>realybėje, 2011 m. III ketv.</span></div></div>
+ <p>Perėjimo prie srautinės paslaugos tempas: <b>${o.pace}</b>.</p><p class="cite">Modelio rezultatas – mokomasis įvertis, ne prognozė. Realybės skaičius – iš bendrovės ataskaitos.</p></div>
+ <div class="panel">${STEPS.map((r,i)=>`<div class="gauge"><span style="width:10em">${r.title}</span><div class="bar"><i style="width:${sc[i]/r.max*100}%;background:${COLORS[i]}"></i></div><b>${sc[i]}</b></div>`).join("")}</div>
+ ${SESSION?'<div class="panel"><p><span class="tag ok">išsiųsta</span> Rezultatai jau dėstytojo ekrane.</p></div>':`<div class="panel"><p>Parodykite šį kodą dėstytojui:</p><div class="code" style="font-size:clamp(1.1rem,6vw,1.8rem)">${codeOf(sc,o.loss)}</div></div>`}
+ <div class="panel theory">${REAL_CHANGE}</div>
+ <div class="panel theory"><h3>Kitas žingsnis</h3><p>Tą pačią logiką – diagnozė, procesas, alternatyvos, elgsena, bandymas, saugikliai – pritaikykite savo II dalies projektui elgsenos strategijos kanve.</p></div>
+ <button class="btn ghost block" id="rs">Pradėti iš naujo</button></div>`;
+ $("#rs").onclick=()=>{if(confirm("Ištrinti šios komandos atsakymus šiame telefone?")){store.del(KEY);S=null;home()}};
+}
+
+/* ===== Dėstytojo ekranas ===== */
+const FKEY="nflx-fac-v1";
+const SLIDES=[
+ ()=>`<p class="muted">Elgsenos strategija · atvejis</p><h1>Netflix, antras bandymas</h1><p class="big">2011 m. sprendimas pereiti prie srautinės paslaugos kainavo 800 000 prenumeratorių. Išsiaiškinsime kodėl – ir sukursime strategiją, kuri būtų pavykusi.</p>`,
+ ()=>`<h2>Prieš sprendimą</h2><p class="big">DVD nuoma paštu ir srautinė paslauga – viename plane, už apie 10 $ per mėnesį. Vadovas įsitikinęs: DVD nuoma pasmerkta, ateitis – srautinė paslauga.</p>`,
+ ()=>`<h2>Sprendimas</h2><p class="big"><b>Liepa:</b> du atskiri planai, abiejų paslaugų kaina iki 60 % didesnė – nuo 10 iki 16 $.</p><p class="big"><b>Rugsėjo 18 d.:</b> atsiprašymas ir „Qwikster“ – atskira DVD įmonė su atskira svetaine ir paskyra.</p><p class="big"><b>Spalio pradžia:</b> „Qwikster“ atšaukiamas, kaina lieka.</p>`,
+ ()=>`<h2>Rezultatas</h2><div class="kpis"><div class="kpi"><b>−800 000</b><span>JAV prenumeratorių per III ketv.</span></div><div class="kpi"><b>−600 000</b><span>bendrovės prognozė rugsėjį</span></div><div class="kpi"><b>300 $ → 77 $</b><span>akcijos kaina</span></div><div class="kpi"><b>23,8 mln.</b><span>prenumeratorių rugsėjo pabaigoje</span></div></div><p class="quote">„I slid into arrogance based upon past success.“ – R. Hastingsas</p><p class="cite">${SRC}</p>`,
+ ()=>`<h2>Jūsų užduotis</h2><p class="big">1 dalis – diagnozė: kurie šališkumai nulėmė nesėkmę. 2 dalis – jūsų strategija: procesas, alternatyvos, kliento elgsena, bandymas, saugikliai.</p><div id="qr2" style="background:#fff;padding:10px;border-radius:10px;display:inline-block;width:240px"></div>`];
+function facilitator(){
+ app.className="wrap wide";
+ let session=store.get(FKEY+"-session",null);if(!session){session="vikonflx-"+uid()+uid().slice(0,4);store.set(FKEY+"-session",session)}
+ const link=ON_GH?BASE_URL+"?s="+session:ART_URL;
+ app.innerHTML=`<div class="reveal">
+ <div class="row" style="justify-content:space-between;align-items:center;margin:12px 0 14px"><h1 style="margin:0;font-size:1.6rem">Dėstytojo ekranas</h1><div class="row"><span class="tag" id="live">ryšys: jungiamasi…</span><button class="btn ghost" id="back">Grįžti</button></div></div>
+ <div class="tabs"><button data-v="case" aria-selected="true">1. Atvejis</button><button data-v="live" aria-selected="false">2. Gyvai</button><button data-v="ideas" aria-selected="false">3. Komandų strategijos</button><button data-v="deb" aria-selected="false">4. Aptarimas</button></div>
+ <section id="v-case"><div class="panel slides"><div class="slide" id="slide"></div><div class="slidenav"><button class="btn ghost" id="prev">Atgal</button><span class="muted" id="sn"></span><button class="btn" id="nxt">Toliau</button></div></div></section>
+ <section id="v-live" class="hidden"><div class="grid2">
+  <div><div class="panel" style="text-align:center"><h3>Prisijunkite telefonu</h3><div id="qr"></div><p class="cite" style="word-break:break-all;margin-top:8px">${esc(link)}</p><button class="btn ghost" id="newses" style="margin-top:6px">Nauja sesija</button></div>
+  <div class="panel"><h3>Komandos kodas</h3><p class="muted">Kai gyvas ryšys neveikia, komanda pabaigoje gauna kodą.</p><label class="field"><span>Komanda</span><input id="cn" type="text" maxlength="24"></label><label class="field"><span>Kodas</span><input id="cc" type="text" placeholder="20-12-15-20-15-15-06-K" autocomplete="off"></label><p id="ce" class="err hidden">Kodas netinka.</p><button class="btn block" id="add">Pridėti</button></div></div>
+  <div><div class="panel"><h3>Komandos</h3><div class="legend">${STEPS.map((r,i)=>`<span style="--c:${COLORS[i]}">${r.title}</span>`).join("")}</div><div class="tablewrap"><table><thead><tr><th>Komanda</th><th>Etapas</th><th>Balai</th><th>Iš viso</th><th>Prarasta (modelis)</th></tr></thead><tbody id="tb"></tbody></table></div></div>
+  <div class="panel"><h3>Pasirinkimai</h3><div class="tabs" id="ltabs">${STEPS.map((r,i)=>`<button data-i="${i}" aria-selected="${i===0}">${r.title}</button>`).join("")}</div><div id="agg"></div></div></div></div></section>
+ <section id="v-ideas" class="hidden"><div class="panel"><h3>Komandų argumentai</h3><div class="tabs" id="itabs">${STEPS.slice(1).map((r,i)=>`<button data-i="${i+1}" aria-selected="${i===0}">${r.title}</button>`).join("")}</div><div id="ideas" class="quoteslist"></div></div></section>
+ <section id="v-deb" class="hidden"><div class="panel"><div class="tabs" id="dtabs">${STEPS.map((r,i)=>`<button data-i="${i}" aria-selected="${i===0}">${r.title}</button>`).join("")}<button data-i="9">Ką Netflix pakeitė</button></div><div id="deb"></div></div></section></div>`;
+ let es=null;
+ $("#back").onclick=()=>{document.onkeydown=null;if(es)es.close();home()};
+ const views=["case","live","ideas","deb"];
+ document.querySelectorAll("[data-v]").forEach(b=>b.onclick=()=>{views.forEach(v=>$("#v-"+v).classList.toggle("hidden",v!==b.dataset.v));document.querySelectorAll("[data-v]").forEach(x=>x.setAttribute("aria-selected",String(x===b)))});
+ const qr=(el,v,size)=>{el.innerHTML="";try{new QRCode(el,{text:v,width:size,height:size,colorDark:"#18212F",colorLight:"#ffffff",correctLevel:QRCode.CorrectLevel.M})}catch(e){el.textContent=v}};
+ let si=0;const show=()=>{$("#slide").innerHTML=`<div class="reveal">${SLIDES[si]()}</div>`;$("#sn").textContent=`${si+1} / ${SLIDES.length}`;$("#prev").disabled=si===0;$("#nxt").disabled=si===SLIDES.length-1;const q=$("#qr2");if(q)qr(q,link,220)};
+ $("#prev").onclick=()=>{if(si>0){si--;show()}};$("#nxt").onclick=()=>{if(si<SLIDES.length-1){si++;show()}};
+ document.onkeydown=e=>{if($("#v-case").classList.contains("hidden"))return;if(e.key==="ArrowRight")$("#nxt").click();if(e.key==="ArrowLeft")$("#prev").click()};
+ qr($("#qr"),link,300);show();
+ $("#newses").onclick=()=>{if(confirm("Pradėti naują sesiją? Komandų sąrašas bus išvalytas.")){store.del(FKEY+"-session");store.set(FKEY,{});if(es)es.close();facilitator()}};
+ let T=store.get(FKEY,{});
+ const ingest=ev=>{if(!ev||!ev.id||!ev.n)return;const t=T[ev.id]||(T[ev.id]={n:"",r:0,sc:[null,null,null,null,null,null],d:{}});
+  t.n=String(ev.n).slice(0,24);if(Array.isArray(ev.sc))ev.sc.forEach((v,i)=>{if(v!=null&&i<6)t.sc[i]=clamp(+v||0,0,20)});
+  if(ev.k==="choice"&&typeof ev.r==="number"){t.d[ev.r]=ev.d;t.sc[ev.r]=clamp(+ev.s||0,0,20);t.r=Math.max(t.r,ev.r+1)}
+  if(ev.k==="done"){t.r=6;if(ev.o)t.o={loss:+ev.o.loss||0}}store.set(FKEY,T);render()};
+ const bars=(title,counts,labels)=>{const tot=Object.values(counts).reduce((a,b)=>a+b,0)||1;return `<h3>${title}</h3><div class="hbars">${labels.map(([k,l])=>`<div class="hbar"><span>${esc(l)}</span><div class="t"><i style="width:${(counts[k]||0)/tot*100}%"></i></div><b>${counts[k]||0}</b></div>`).join("")}</div>`};
+ const cnt=arr=>arr.reduce((m,k)=>{m[k]=(m[k]||0)+1;return m},{});
+ let cur=0,curI=1;
+ const aggr=i=>{cur=i;document.querySelectorAll("#ltabs button").forEach(b=>b.setAttribute("aria-selected",String(+b.dataset.i===i)));
+  const D=Object.values(T).map(t=>t.d[i]).filter(Boolean);if(!D.length){$("#agg").innerHTML='<p class="muted">Šio žingsnio dar niekas nepateikė.</p>';return}
+  let h=`<p class="muted">Pateikė: ${D.length} kom.</p>`;
+  if(i===0)FACTS.forEach(([id,t])=>{h+=bars(t.slice(0,70)+"…",cnt(D.map(d=>d.m[id])),BIASES.map(([k,l])=>[k,(KEY_D[id]===k?"✓ ":"")+l]))});
+  if(i===1)h+=bars("Įtraukti įrankiai",cnt(D.flatMap(d=>d.t)),TOOLS.map(x=>[x[0],x[1]]));
+  if(i===2)h+=bars("Svarstytos alternatyvos",cnt(D.flatMap(d=>d.alt)),PATHS.map(x=>[x[0],x[1]]))+bars("Pasirinktas kelias",cnt(D.map(d=>d.fin)),PATHS.map(x=>[x[0],x[1]]));
+  if(i===3)h+=bars("Pagrindinė kliūtis (COM-B)",cnt(D.map(d=>d.bar)),K.bar)+bars("Numatytoji parinktis",cnt(D.map(d=>d.def)),K.def.map(x=>[x[0],x[1]]))+bars("Rėminimas",cnt(D.map(d=>d.frame)),K.frame.map(x=>[x[0],x[1]]))+bars("Paskyros",cnt(D.map(d=>d.acc)),K.acc.map(x=>[x[0],x[1]]));
+  if(i===4)h+=bars("Išbandymas",cnt(D.map(d=>d.test)),TEST.map(x=>[x[0],x[1]]))+bars("Rodiklis",cnt(D.map(d=>d.met)),METRIC);
+  if(i===5)h+=bars("Sustabdymo taisyklė",cnt(D.map(d=>d.stop)),STOP.map(x=>[x[0],x[1]]));
+  $("#agg").innerHTML=h};
+ const ideas=i=>{curI=i;document.querySelectorAll("#itabs button").forEach(b=>b.setAttribute("aria-selected",String(+b.dataset.i===i)));
+  const L=Object.values(T).filter(t=>t.d[i]&&t.d[i].w);
+  $("#ideas").innerHTML=L.length?L.map(t=>{const d=t.d[i];const tag=i===2?` · ${esc((PATHS.find(p=>p[0]===d.fin)||[0,""])[1])}`:"";return `<p><b>${esc(t.n)}</b>${tag}<br>${esc(d.w)}</p>`}).join(""):'<p class="muted">Argumentų dar nėra.</p>'};
+ const render=()=>{const rows=Object.values(T).sort((a,b)=>b.sc.reduce((x,y)=>x+(y||0),0)-a.sc.reduce((x,y)=>x+(y||0),0));
+  $("#tb").innerHTML=rows.length?rows.map(t=>{const tot=t.sc.reduce((a,b)=>a+(b||0),0);return `<tr><td><b>${esc(t.n)}</b></td><td>${t.r>=6?'<span class="tag ok">baigė</span>':`${t.r+1} / 6`}</td><td><div class="stack">${t.sc.map((v,i)=>`<i style="width:${(v||0)/STEPS[i].max*100/6}%;background:${COLORS[i]}"></i>`).join("")}</div></td><td>${tot}</td><td>${t.o?"−"+nf(t.o.loss):"–"}</td></tr>`}).join(""):'<tr><td colspan="5" class="muted">Laukiama komandų.</td></tr>';
+  aggr(cur);ideas(curI)};
+ document.querySelectorAll("#ltabs button").forEach(b=>b.onclick=()=>aggr(+b.dataset.i));
+ document.querySelectorAll("#itabs button").forEach(b=>b.onclick=()=>ideas(+b.dataset.i));
+ const deb=i=>{document.querySelectorAll("#dtabs button").forEach(b=>b.setAttribute("aria-selected",String(+b.dataset.i===i)));$("#deb").innerHTML=`<div class="theory">${i===9?REAL_CHANGE:THEORY[STEPS[i].id]}</div>`};
+ document.querySelectorAll("#dtabs button").forEach(b=>b.onclick=()=>deb(+b.dataset.i));deb(0);
+ $("#add").onclick=()=>{const n=$("#cn").value.trim(),c=$("#cc").value.trim().toUpperCase().replace(/\s/g,"");const m=c.match(/^(\d{1,2})-(\d{1,2})-(\d{1,2})-(\d{1,2})-(\d{1,2})-(\d{1,2})-(\d{1,2})-([A-Z0-9])$/);
+  if(!n||!m){$("#ce").classList.remove("hidden");return}const a=m.slice(1,8).map(Number);if(checksum(a)!==m[8]||a.slice(0,6).some((v,i)=>v>STEPS[i].max)){$("#ce").classList.remove("hidden");return}
+  $("#ce").classList.add("hidden");T["k-"+n]={n,r:6,sc:a.slice(0,6),d:{},o:{loss:a[6]*10000}};store.set(FKEY,T);$("#cn").value="";$("#cc").value="";render()};
+ render();
+ const setLive=(ok,txt)=>{const el=$("#live");if(!el)return;el.textContent=txt;el.className="tag "+(ok?"ok":"bias")};
+ try{fetch(RELAY+session+"/json?poll=1&since=all").then(r=>r.ok?r.text():"").then(t=>t.split("\n").forEach(l=>{try{const m=JSON.parse(l);if(m.event==="message")ingest(JSON.parse(m.message))}catch(e){}})).catch(()=>{});
+  es=new EventSource(RELAY+session+"/sse");es.onopen=()=>setLive(true,"ryšys: gyvai");es.onmessage=e=>{try{const m=JSON.parse(e.data);if(m.event==="message")ingest(JSON.parse(m.message))}catch(err){}};es.onerror=()=>setLive(false,"ryšio nėra");
+ }catch(e){setLive(false,"ryšio nėra")}
+}
+home();
+</script>
+</body>
+</html>

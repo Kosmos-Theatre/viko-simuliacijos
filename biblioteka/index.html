@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="lt">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Biblioteka 36 vietose – elgsenos strategijos simuliacija</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap&subset=latin-ext" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+:root{
+  --bg:#E9EEF3; --surface:#FFFFFF; --ink:#18212F; --muted:#5A6577; --line:#CBD3DE;
+  --signal:#E2A11B; --signal-ink:#3A2700; --ok:#17756E; --bias:#C2412F; --soft:#F4F7FA;
+  --display:"Unbounded","Arial Black",system-ui,sans-serif;
+  --body:"IBM Plex Sans","Segoe UI",system-ui,-apple-system,sans-serif;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#121822; --surface:#1B2330; --ink:#E7ECF2; --muted:#9AA6B8; --line:#2E3A4C;
+    --signal:#F0B43A; --signal-ink:#1E1400; --ok:#3FB3A8; --bias:#E9725F; --soft:#222C3B;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#121822; --surface:#1B2330; --ink:#E7ECF2; --muted:#9AA6B8; --line:#2E3A4C;
+  --signal:#F0B43A; --signal-ink:#1E1400; --ok:#3FB3A8; --bias:#E9725F; --soft:#222C3B;
+}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:17px;line-height:1.55;-webkit-text-size-adjust:100%}
+h1,h2,h3{font-family:var(--display);font-weight:700;line-height:1.15;margin:0 0 .5em;letter-spacing:-.01em}
+h1{font-size:clamp(1.6rem,6vw,2.6rem)}
+h2{font-size:clamp(1.25rem,4.5vw,1.7rem)}
+h3{font-size:1.05rem;font-weight:500}
+p{margin:0 0 .9em}
+small,.muted{color:var(--muted)}
+button,input,select{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--signal);outline-offset:2px}
+.wrap{max-width:640px;margin:0 auto;padding:20px 18px 64px}
+.wide{max-width:1180px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:20px;margin:0 0 16px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:.4em;min-height:48px;padding:.7em 1.3em;border-radius:999px;border:2px solid var(--ink);background:var(--ink);color:var(--surface);font-weight:600;cursor:pointer}
+.btn.ghost{background:transparent;color:var(--ink)}
+.btn.block{width:100%}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.row{display:flex;gap:12px;flex-wrap:wrap}
+label.field{display:block;margin:0 0 14px}
+label.field span{display:block;font-weight:600;margin-bottom:4px}
+input[type=text],input[type=number],select{width:100%;min-height:48px;padding:.6em .8em;border:1.5px solid var(--line);border-radius:10px;background:var(--soft)}
+.opt{display:block;position:relative;border:1.5px solid var(--line);border-radius:12px;padding:12px 14px 12px 46px;margin:0 0 10px;background:var(--soft);cursor:pointer}
+.opt input{position:absolute;left:14px;top:15px;width:20px;height:20px;accent-color:var(--ink)}
+.opt b{display:block}
+.opt:has(input:checked){border-color:var(--ink);background:var(--surface)}
+.opt small{display:block}
+.gauge{display:flex;align-items:center;gap:10px;margin:6px 0}
+.gauge .bar{flex:1;height:10px;border-radius:5px;background:var(--line);overflow:hidden}
+.gauge .bar i{display:block;height:100%;background:var(--ok)}
+.stepper{display:flex;gap:6px;margin:0 0 18px}
+.stepper i{flex:1;height:6px;border-radius:3px;background:var(--line)}
+.stepper i.on{background:var(--signal)}
+.stepper i.done{background:var(--ink)}
+.tag{display:inline-block;white-space:nowrap;font-size:.8rem;font-weight:600;padding:.15em .6em;border-radius:6px;background:var(--soft);border:1px solid var(--line)}
+.tag.bias{color:var(--bias);border-color:var(--bias)}
+.tag.ok{color:var(--ok);border-color:var(--ok)}
+.score{font-family:var(--display);font-size:3rem;line-height:1}
+.theory{border-left:4px solid var(--signal);padding:4px 0 4px 16px;margin:18px 0}
+.theory h3{margin-bottom:.3em}
+.theory ul{margin:.3em 0 .6em;padding-left:1.1em}
+.theory li{margin:.25em 0}
+.cite{font-size:.85rem;color:var(--muted)}
+.dots{display:grid;grid-template-columns:repeat(20,1fr);gap:4px;margin:12px 0}
+.dots i{aspect-ratio:1;border-radius:50%;background:var(--line)}
+.dots i.r{background:var(--ok)}
+.dots i.s{background:var(--signal)}
+.ci{position:relative;height:56px;margin:18px 0 6px;border-bottom:1.5px solid var(--line)}
+.ci .zero{position:absolute;top:0;bottom:0;width:2px;background:var(--bias)}
+.ci .rng{position:absolute;top:22px;height:12px;border-radius:6px;background:var(--signal)}
+.ci .pt{position:absolute;top:16px;width:4px;height:24px;background:var(--ink);border-radius:2px}
+.refset{display:flex;align-items:flex-end;gap:5px;height:120px;margin:12px 0 4px}
+.refset i{flex:1;background:var(--ok);border-radius:3px 3px 0 0;position:relative}
+.refset i.anchor{background:var(--bias)}
+.code{font-family:var(--display);font-size:clamp(1.6rem,8vw,2.4rem);letter-spacing:.04em;text-align:center;padding:18px;border:2px dashed var(--ink);border-radius:14px;margin:12px 0}
+.hero{padding:28px 0 8px}
+.hero .lede{font-size:1.1rem;max-width:60ch}
+.grid2{display:grid;grid-template-columns:1fr;gap:16px}
+@media (min-width:900px){.grid2{grid-template-columns:360px 1fr}}
+#qr{background:#fff;padding:14px;border-radius:12px;display:inline-block}
+#qr img,#qr canvas{display:block;width:100%;max-width:300px;height:auto}
+table{width:100%;border-collapse:collapse}
+.tablewrap{overflow-x:auto}
+th,td{text-align:left;padding:8px 6px;border-bottom:1px solid var(--line);vertical-align:middle}
+th{font-size:.85rem;color:var(--muted);font-weight:600}
+.stack{display:flex;height:16px;border-radius:4px;overflow:hidden;min-width:160px;background:var(--line)}
+.stack i{display:block;height:100%}
+.legend{display:flex;flex-wrap:wrap;gap:10px;font-size:.85rem;color:var(--muted);margin:8px 0}
+.legend span::before{content:"";display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;background:var(--c)}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 12px}
+.tabs button{border:1.5px solid var(--line);background:var(--soft);border-radius:999px;padding:.4em 1em;cursor:pointer}
+.tabs button[aria-selected=true]{background:var(--ink);color:var(--surface);border-color:var(--ink)}
+.err{color:var(--bias);font-weight:600}
+.hidden{display:none!important}
+@media (prefers-reduced-motion:no-preference){.reveal{animation:rv .35s ease-out}@keyframes rv{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}}
+
+.kpis{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin:10px 0}
+@media (min-width:700px){.kpis{grid-template-columns:repeat(4,1fr)}}
+.kpi{background:var(--soft);border:1px solid var(--line);border-radius:12px;padding:12px}
+.kpi b{display:block;font-family:var(--display);font-size:1.5rem;line-height:1.1}
+.kpi span{font-size:.85rem;color:var(--muted)}
+.hbars{margin:8px 0}
+.hbar{display:grid;grid-template-columns:minmax(7em,40%) 1fr 3.2em;gap:8px;align-items:center;margin:6px 0;font-size:.95rem}
+.hbar .t{height:14px;border-radius:7px;background:var(--line);overflow:hidden}
+.hbar .t i{display:block;height:100%;background:var(--ink)}
+.hbar.hl .t i{background:var(--signal)}
+.hbar b{text-align:right}
+.funnel{margin:10px 0}
+.funnel div{margin:4px auto;padding:9px 12px;border-radius:8px;background:var(--ink);color:var(--surface);display:flex;justify-content:space-between;gap:10px;font-size:.95rem}
+.funnel div.lo{background:var(--bias)}
+.vbars{display:flex;align-items:flex-end;gap:12px;height:150px;margin:14px 0 4px}
+.vbars div{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%}
+.vbars i{display:block;width:100%;background:var(--ink);border-radius:4px 4px 0 0}
+.vbars small{margin-top:4px}
+.vbars em{font-style:normal;font-weight:600;font-size:.85rem;margin-bottom:3px}
+.matrix{display:grid;grid-template-columns:auto 1fr 1fr;gap:6px;font-size:.9rem;margin:10px 0}
+.matrix > div{background:var(--soft);border:1px solid var(--line);border-radius:8px;padding:8px;min-height:64px}
+.matrix > .ax{background:none;border:none;color:var(--muted);font-size:.8rem;min-height:0;display:flex;align-items:center}
+details.byla{background:var(--surface);border:1px solid var(--line);border-radius:14px;margin:0 0 16px}
+details.byla summary{cursor:pointer;padding:14px 20px;font-weight:600;list-style:none}
+details.byla summary::before{content:"+ ";color:var(--signal)}
+details.byla[open] summary::before{content:"– "}
+details.byla > div{padding:0 20px 16px}
+.slides{position:relative}
+.slide{min-height:min(70vh,640px);display:flex;flex-direction:column;justify-content:center}
+.slide h1{font-size:clamp(1.8rem,4vw,3.2rem)}
+.slide .big{font-size:clamp(1.1rem,2vw,1.45rem);max-width:46ch}
+.slidenav{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:14px}
+.quote{font-family:var(--display);font-weight:500;font-size:clamp(1.1rem,2.4vw,1.6rem);line-height:1.3;border-left:4px solid var(--bias);padding-left:16px;margin:16px 0}
+</style>
+
+<body>
+<main id="app" class="wrap"></main>
+<script>
+"use strict";
+/* ===== Ryšys su dėstytojo ekranu (veikia GitHub Pages; Claude peržiūroje išorinis ryšys užblokuotas) ===== */
+const RELAY="https://ntfy.sh/";
+const QS=new URLSearchParams(location.search);
+const SESSION=QS.get("s");
+const BASE_URL=location.origin+location.pathname;
+const SOURCE_URL="https://panrbiblioteka.lt/uploads/PLANAI/PRSVB_2025_met%C5%B3_veiklos_ataskaita_su%20vir%C5%A1eliu.pdf";
+function relaySend(evt){ if(!SESSION) return; try{ fetch(RELAY+SESSION,{method:"POST",body:JSON.stringify(evt)}).catch(()=>{}) }catch(e){} }
+
+const COLORS=["#2F6FB0","#17756E","#E2A11B","#C2412F","#7A4FB5"];
+const ROUNDS=[
+  {id:"r1",title:"Ataskaita tarybai",concept:"Rėminimas ir rodiklių atranka"},
+  {id:"r2",title:"Diagnozė",concept:"Patvirtinimo šališkumas"},
+  {id:"r3",title:"Tinklo sprendimas",concept:"Nuostolių vengimas ir status quo"},
+  {id:"r4",title:"Pasirinkimų architektūra",concept:"„Nudge“ dizainas"},
+  {id:"r5",title:"2026 m. tikslai",concept:"Inkaravimas ir planavimo klaida"}
+];
+const $=s=>document.querySelector(s);
+const app=$("#app");
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const gauss=()=>{let u=0,v=0;while(!u)u=Math.random();while(!v)v=Math.random();return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v)};
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const nf=n=>Number(n).toLocaleString("lt-LT");
+const uid=()=>Math.random().toString(36).slice(2,10);
+const store={get(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}},del(k){try{localStorage.removeItem(k)}catch(e){}}};
+const radios=(name,arr)=>arr.map(([v,t,s])=>`<label class="opt"><input type="radio" name="${name}" value="${v}"><b>${t}</b>${s?`<small>${s}</small>`:""}</label>`).join("");
+const val=name=>(document.querySelector(`input[name="${name}"]:checked`)||{}).value;
+const pick=(arr,k)=>(arr.find(x=>x[0]===k)||[])[1]||k;
+
+/* ===== ATVEJIS: tikri duomenys iš 2025 m. veiklos ataskaitos ===== */
+const ORG="Panevėžio rajono savivaldybės viešoji biblioteka";
+function kpis(){return `<div class="kpis">
+ <div class="kpi"><b>37 931</b><span>gyventojas rajone (2025 m. pradžia)</span></div>
+ <div class="kpi"><b>36</b><span>bibliotekos: viešoji, Ramygalos ir 34 kaimo</span></div>
+ <div class="kpi"><b>4 972</b><span>registruoti vartotojai (−2,0 %)</span></div>
+ <div class="kpi"><b>1,69 mln. €</b><span>metinis biudžetas</span></div></div>`}
+function planTable(){return `<div class="tablewrap"><table><thead><tr><th>Rodiklis</th><th>2025 planas</th><th>2025 faktas</th><th>2024 faktas</th><th>Pokytis</th></tr></thead><tbody>
+ <tr><td>Fiziniai apsilankymai</td><td>80 000</td><td>101 965</td><td>98 286</td><td>+3,7 %</td></tr>
+ <tr><td>Išduoti dokumentai</td><td>240 000</td><td>231 141</td><td>247 767</td><td>−6,7 %</td></tr>
+ <tr><td>Kultūros ir edukacinės veiklos</td><td>1 700</td><td>2 374</td><td>2 182</td><td>+8,8 %</td></tr>
+ <tr><td>Virtualūs apsilankymai</td><td>70 000</td><td>21 403</td><td>58 106*</td><td>–</td></tr>
+ <tr><td>Muziejų lankytojai</td><td>3 000</td><td>1 482</td><td>1 476</td><td>+0,4 %</td></tr></tbody></table></div>
+ <p class="cite">* 2025 m. pakeista virtualių apsilankymų apskaita, todėl metai nepalyginami.</p>`}
+function splitChart(){
+ const rows=[["Viešoji biblioteka",[1217,1268],[34423,35801]],["Ramygalos biblioteka",[277,305],[18090,17181]],["34 kaimo bibliotekos",[3577,3399],[195254,178159]]];
+ const pc=(a,b)=>((b-a)/a*100).toFixed(1).replace(".",",");
+ return `<div class="tablewrap"><table><thead><tr><th></th><th>Vartotojai 2024→2025</th><th>Išduotis 2024→2025</th></tr></thead><tbody>${rows.map(([n,u,i])=>`<tr><td>${n}</td><td>${nf(u[0])} → <b>${nf(u[1])}</b> <span class="tag ${u[1]<u[0]?"bias":"ok"}">${u[1]>u[0]?"+":""}${pc(u[0],u[1])} %</span></td><td>${nf(i[0])} → <b>${nf(i[1])}</b> <span class="tag ${i[1]<i[0]?"bias":"ok"}">${i[1]>i[0]?"+":""}${pc(i[0],i[1])} %</span></td></tr>`).join("")}</tbody></table></div>`}
+function budgetChart(){const items=[["Darbo užmokestis",1294.0],["Kitos išlaidos (Sodra, komunalinės ir kt.)",281.1],["Dokumentai (knygos, periodika)",67.1],["Pastatų remontas",42.7],["Automatizacija",4.3]];const t=1689.2;
+ return `<div class="hbars">${items.map(([n,v],i)=>`<div class="hbar ${i===2?"hl":""}"><span>${n}</span><div class="t"><i style="width:${v/1294*100}%"></i></div><b>${Math.round(v/t*100)} %</b></div>`).join("")}</div><p class="muted">2025 m. išlaidos – 1 689,2 tūkst. €.</p>`}
+function supplyChart(){return `<div class="vbars" style="height:130px"><div><em>6 715</em><i style="height:100%"></i><small>2024 gauta</small></div><div><em>4 591</em><i style="height:${4591/6715*100}%;background:var(--bias)"></i><small>2025 gauta</small></div></div><p class="muted">Naujų dokumentų gauta 31,6 % mažiau. Vidutinė už valstybės lėšas įsigyto dokumento kaina – 12,57 €. Viešosios bibliotekos fondas per metus atsinaujino tik 2,92 %.</p>`}
+function sourceNote(){return `<p class="cite">Šaltinis: ${ORG}, 2025 m. veiklos ataskaita (vieša). Situacija savivaldybėje ir sprendimų variantai – simuliacijos scenarijus.</p>`}
+function dossier(){return `
+ <div class="panel"><h3>${ORG}</h3>${kpis()}<p>Dauguma vartotojų (3 399 iš 4 972) ir apsilankymų (79 014 iš 101 965) – kaimo bibliotekose.</p></div>
+ <div class="panel"><h3>2025 m. rodikliai: planas ir faktas</h3>${planTable()}</div>
+ <div class="panel"><h3>Kur vartotojai ir knygos: centras ir kaimai</h3>${splitChart()}</div>
+ <div class="panel"><h3>Kam išleidžiami pinigai</h3>${budgetChart()}</div>
+ <div class="panel"><h3>Naujų knygų srautas mažėja</h3>${supplyChart()}</div>
+ <div class="panel" style="border-color:var(--signal)"><h3>Simuliacijos užduotis</h3><p>Savivaldybė rengia 2027–2029 m. strateginį planą. Bibliotekos taryba turi pateikti sprendimus: kaip atsiskaityti, kas iš tiesų vyksta, ką daryti su kaimo bibliotekų tinklu, kaip pritraukti naujų skaitytojų ir kokius tikslus kelti.</p>${sourceNote()}</div>`}
+function bylaBox(){return `<details class="byla"><summary>Atvejo byla: duomenys</summary><div>${kpis()}${planTable()}${splitChart()}${supplyChart()}${budgetChart()}</div></details>`}
+
+/* ===== Teorija ===== */
+const THEORY={
+r1:`<h3>Rėminimas, rodiklių atranka ir Goodharto dėsnis</h3><ul>
+<li><b>Rėminimo efektas.</b> Ta pati informacija, pateikta kaip laimėjimas ar kaip praradimas, sukelia skirtingus sprendimus (Tversky, Kahneman, 1981).</li>
+<li><b>Selektyvus atsiskaitymas.</b> Iš daugelio rodiklių išrenkami tie, kurie rodo palankų vaizdą. Tai ne melas, bet sprendėjas gauna iškreiptą paveikslą.</li>
+<li><b>Planas kaip inkaras.</b> Jei planas nustatomas žemiau praėjusių metų fakto, „plano viršijimas“ tampa garantuotas ir nieko nebepasako apie pažangą.</li>
+<li><b>Goodharto dėsnis.</b> Kai rodiklis tampa tikslu, jis nustoja būti geru matu: organizacija ima optimizuoti skaičių, o ne rezultatą.</li></ul>
+<p class="cite">Apsauga: atsiskaityti subalansuotu rodiklių rinkiniu, visada lyginti su praėjusiais metais, o ne vien su planu, ir pažymėti apskaitos pokyčius.</p>`,
+r2:`<h3>Patvirtinimo šališkumas ir diagnostinė informacija</h3><ul>
+<li><b>Patvirtinimo paieška.</b> Hipotezę linkstame tikrinti ieškodami ją patvirtinančių faktų, o ne tų, kurie galėtų ją paneigti (Wason, 1960).</li>
+<li><b>Diagnostinė informacija</b> skiriasi priklausomai nuo to, ar hipotezė teisinga. Populiariausių knygų sąrašas nieko nepasako apie tuos, kurie nustojo skaityti.</li>
+<li><b>Paklausos ir pasiūlos painiava.</b> Mažėjanti išduotis gali reikšti ne mažesnį norą skaityti, o mažesnį pasirinkimą. Apsilankymai auga, tarpbibliotekinio abonemento užklausos auga, o naujų knygų mažėja.</li>
+<li><b>Vadovo nuomonės efektas (HiPPO).</b> Garsiausias ar aukščiausio rango balsas užgožia duomenis, jei procesas neapsaugo nuo to.</li></ul>`,
+r3:`<h3>Perspektyvų teorija, nuostolių vengimas ir status quo</h3><ul>
+<li><b>Nuostolių vengimas.</b> Netektis jaučiama maždaug dvigubai stipriau nei tokio paties dydžio laimėjimas (Kahneman, Tversky, 1979).</li>
+<li><b>Rėminimas.</b> Tas pats planas, pavadintas „išsaugosime 28 bibliotekas“ arba „uždarysime 6 bibliotekas“, sulaukia skirtingo pritarimo. Žr. dėstytojo ekrane, kaip pasiskirstė jūsų grupės.</li>
+<li><b>Status quo šališkumas.</b> Esama padėtis atrodo saugiausia, net kai jos kaštai dideli, tik nematomi (Samuelson, Zeckhauser, 1988).</li>
+<li><b>Proceso kokybė.</b> Sprendimai, priimti pagal iš anksto sutartus kriterijus, surinkus trūkstamus duomenis ir įtraukus paveiktus žmones, duoda geresnius rezultatus nei vien analizė (Lovallo, Sibony, 2010).</li></ul>`,
+r4:`<h3>Pasirinkimų architektūra ir „nudge“</h3><ul>
+<li><b>Pasirinkimų architektūra.</b> Neutralios aplinkos nėra: numatytoji parinktis, tvarka, žodžiai ir laikas visada kažką skatina (Thaler, Sunstein, 2008).</li>
+<li><b>Numatytosios parinktys</b> – stipriausias svertas. Šalyse, kur organų donorystė numatyta pagal nutylėjimą, sutinkančiųjų dalis siekia beveik visus gyventojus; kur reikia aktyviai sutikti – dažnai mažiau nei penktadalis (Johnson, Goldstein, 2003).</li>
+<li><b>EAST principai</b> (Behavioural Insights Team, 2014): veiksmas turi būti <i>lengvas</i>, <i>patrauklus</i>, <i>socialus</i> ir <i>savalaikis</i>.</li>
+<li><b>Riba: „sludge“ ir tamsieji šablonai.</b> Paskatos turi būti lengva atsisakyti, ir ji turi būti naudinga žmogui (Thaler, 2018).</li></ul>`,
+r5:`<h3>Inkaravimas, planavimo klaida ir išorinis požiūris</h3><ul>
+<li><b>Inkaravimas.</b> Ankstesnis planas tampa atskaitos tašku naujam, net kai jo niekada nepavyko pasiekti (Tversky, Kahneman, 1974).</li>
+<li><b>Planavimo klaida.</b> Tikslai keliami pagal norą, o ne pagal tai, kas vyko anksčiau.</li>
+<li><b>Išorinis požiūris.</b> Prognozė pradedama nuo bazinės normos – kelerių metų fakto ar panašių organizacijų rezultatų – ir tik tada koreguojama (Kahneman, Lovallo, 1993).</li>
+<li><b>Premortem.</b> Prieš tvirtinant planą įsivaizduojama, kad jis žlugo, ir aiškinamasi kodėl (Klein, 2007).</li></ul>`};
+const DEBRIEF_Q={
+r1:["Kuris sakinys tarybai sukeltų mažiausiai klausimų – ir kodėl tai pavojinga?","Ką reiškia plano viršijimas, jei planas žemesnis už praėjusių metų faktą?","Kokius rodiklius jūsų organizacija rodo, o kuriuos nutyli?"],
+r2:["Kuriuos duomenis rinkotės pirmiausia ir kodėl?","Kas atsitiktų, jei savivaldybė patikėtų „žmonės nebeskaito“?","Kur jūsų projekte paklausos problema iš tiesų yra pasiūlos problema?"],
+r3:["Kaip pasiskirstė sprendimai tarp A ir B formuluočių?","Kodėl „uždaryti“ skamba blogiau nei „išsaugoti 28“?","Kokius kriterijus reikėtų sutarti prieš sprendžiant?"],
+r4:["Kuris svertas davė didžiausią efektą?","Ar registracija vietoje su dokumentu – būtinybė ar įprotis?","Kur baigiasi paskata ir prasideda manipuliacija?"],
+r5:["Kas lėmė jūsų muziejų lankytojų tikslą – 3 000 ar 1 482?","Kodėl planas, kurio niekada nepasiekiama, išlieka?","Kokią peržiūros taisyklę įrašytumėte į planą?"]};
+
+/* ===== Komandos būsena ===== */
+const KEY="prsvb-sim-v1"+(SESSION?"-"+SESSION:"");
+let S=store.get(KEY,null);
+function save(){store.set(KEY,S)}
+function reset(){store.del(KEY);S=null;home()}
+function report(k,extra){relaySend(Object.assign({id:S.id,n:S.team,r:S.round,k,sc:S.scores},extra||{}))}
+
+function home(){
+ app.className="wrap";
+ if(QS.get("f")==="1") return facilitator();
+ app.innerHTML=`<section class="hero reveal"><h1>Biblioteka 36 vietose</h1>
+ <p class="lede">Elgsenos strategijos simuliacija pagal tikrus ${ORG.replace("viešoji biblioteka","viešosios bibliotekos")} 2025 m. duomenis. Jūsų komanda – bibliotekos strateginė taryba.</p></section>
+ <div class="panel"><h2>Esu komandoje</h2>
+ ${SESSION?'<p><span class="tag ok">prisijungta prie paskaitos</span> Dėstytojas matys jūsų sprendimus.</p>':'<p class="muted">Vienas telefonas komandai. Sprendimus aptarkite kartu, įveskite – vienas.</p>'}
+ <label class="field"><span>Komandos pavadinimas</span><input id="tname" type="text" maxlength="24" autocomplete="off"></label>
+ <button class="btn block" id="start">Pradėti</button>
+ ${S?`<p style="margin-top:12px"><button class="btn ghost block" id="cont">Tęsti: ${esc(S.team)} (${Math.min(S.round+1,5)}/5)</button></p>`:""}</div>
+ ${SESSION?"":`<p style="text-align:center"><button class="btn ghost" id="fac">Dėstytojo ekranas</button></p>`}`;
+ $("#start").onclick=()=>{const n=$("#tname").value.trim();if(!n){$("#tname").focus();$("#tname").style.borderColor="var(--bias)";return}
+  S={id:uid(),team:n,round:0,scores:[null,null,null,null,null],data:{},frame:Math.random()<0.5?"A":"B"};save();report("join");intro()};
+ if(S) $("#cont").onclick=()=>S.round>=5?finish():play();
+ if($("#fac")) $("#fac").onclick=facilitator;
+}
+function stepper(){return `<div class="stepper">${ROUNDS.map((r,i)=>`<i class="${i<S.round?"done":i===S.round?"on":""}"></i>`).join("")}</div>`}
+function intro(){app.innerHTML=`<div class="reveal"><h2>Atvejis</h2><p>Perskaitykite bylą. Ją galėsite atsiversti kiekviename žingsnyje.</p>${dossier()}<button class="btn block" id="go">Į pirmą sprendimą</button></div>`;$("#go").onclick=play;window.scrollTo(0,0)}
+function play(){while(S.round<5&&S.scores[S.round]!=null){S.round++;save()}if(S.round>=5)return finish();[r1,r2,r3,r4,r5][S.round]();window.scrollTo(0,0)}
+function head(i){return `${stepper()}<p class="muted" style="margin:0">Sprendimas ${i+1} iš 5</p><h2>${ROUNDS[i].title}</h2>${bylaBox()}`}
+function result(i,score,html,data){
+ S.scores[i]=score;S.data[ROUNDS[i].id]=data;save();report("choice",{r:i,d:data,s:score});
+ app.innerHTML=`<div class="reveal">${stepper()}<div class="panel"><p class="muted" style="margin:0">Rezultatas</p><div class="score">${score}<small style="font-size:1rem"> / 20</small></div></div>
+ <div class="panel">${html}</div><div class="panel theory">${THEORY[ROUNDS[i].id]}</div>
+ <button class="btn block" id="next">${i<4?"Kitas sprendimas":"Baigti"}</button></div>`;
+ $("#next").onclick=()=>{S.round=i+1;save();play()};window.scrollTo(0,0);
+}
+
+/* ===== 1. Ataskaita tarybai ===== */
+const R1A=[["a","„Lankomumas auga: 101 965 apsilankymai, planas viršytas 27 %.“","Vien teigiami rodikliai"],["b","„Biblioteka tampa bendruomenės erdve: apsilankymai +3,7 %, edukacijos +19 %, tačiau registruotų vartotojų −2 %, išduotis −6,7 %, naujų knygų −32 %.“","Subalansuotas vaizdas"],["c","„Biblioteka praranda skaitytojus: išduotis −6,7 %, naujų knygų gauta trečdaliu mažiau.“","Vien neigiami rodikliai"],["d","„Įvykdyti 2 iš 5 planinių rodiklių.“","Formalus atsakymas"]];
+const R1B=[["a","Biblioteka dirbo 27 % geriau nei tikėtasi"],["b","Planas buvo nustatytas žemiau praėjusių metų fakto, todėl jo viršijimas mažai ką sako"],["c","Planas buvo per ambicingas"]];
+function r1(){
+ app.innerHTML=`<div class="reveal">${head(0)}
+ <div class="panel"><p>Savivaldybės tarybos posėdyje jums skirta viena minutė. Tarybos nariai prašo vieno sakinio: kaip sekasi bibliotekai?</p>${planTable()}${radios("q1",R1A)}</div>
+ <div class="panel"><p>Tarybos narys klausia: fizinių apsilankymų planas – 80 000, faktas – 101 965. Ką tai reiškia?</p>${radios("q2",R1B)}
+ <p id="e" class="err hidden">Atsakykite į abu klausimus.</p><button class="btn block" id="ok">Pateikti tarybai</button></div></div>`;
+ $("#ok").onclick=()=>{const q1=val("q1"),q2=val("q2");if(!q1||!q2){$("#e").classList.remove("hidden");return}
+  const sc={b:12,d:5,a:2,c:2}[q1]+(q2==="b"?8:0);
+  result(0,sc,`<h3>${q1==="b"?"Taryba gavo tikrą vaizdą":"Taryba gavo iškreiptą vaizdą"}</h3>
+  <p>${q1==="a"?'<span class="tag bias">selektyvus atsiskaitymas</span> Taryba išgirdo tik apie augimą. Kai po metų paaiškės, kad mažėja vartotojų ir knygų, pasitikėjimas sumažės.':q1==="c"?'<span class="tag bias">neigiamas rėminimas</span> Taryba išgirdo tik apie nuosmukį ir gali nuspręsti, kad bibliotekų tinklas nebereikalingas, nors apsilankymai auga.':q1==="d"?'<span class="tag bias">formalumas</span> Tiesa, bet tarybai nieko nepasako: į ką atkreipti dėmesį?':'<span class="tag ok">subalansuota</span> Ir stiprybės, ir rizikos – taryba gali priimti informuotą sprendimą.'}</p>
+  <p>${q2==="b"?'<span class="tag ok">teisingai</span> 2024 m. jau buvo 98 286 apsilankymai, o 2025 m. planas – 80 000. Viršyti tokį planą buvo garantuota.':'<span class="tag bias">inkaras</span> 2024 m. faktas – 98 286, todėl planas 80 000 buvo žemiau to, kas jau pasiekta. „Viršijimas“ rodo plano nustatymo būdą, ne pažangą.'}</p>`,{q1,q2});
+ };
+}
+
+/* ===== 2. Diagnozė ===== */
+const CARDS=[
+ {id:"A",t:"Populiariausių knygų sąrašas",r:"Skaitomiausi – L. Riley, K. Hannah, C. Hoover romanai; lietuvių autorių penketuke – I. Buivydaitė, I. Skujaitė, A. Ruseckaitė.",d:0,why:"Nediagnostiška: rodo, ką skaito tie, kurie skaito, bet nieko apie tuos, kurie nustojo."},
+ {id:"B",t:"Kaimo bibliotekų apsilankymai ir išduotis",r:"Apsilankymai +1,4 % (79 014), išduotis −8,8 % (178 159).",d:1,why:"Diagnostiška: žmonės ateina, bet knygų ima mažiau. Jei nebeskaitytų, mažėtų ir apsilankymai."},
+ {id:"C",t:"Naujų knygų srautas",r:"Gauta 4 591 dokumentas (2024 m. – 6 715, −31,6 %). Viešosios bibliotekos fondas atsinaujino 2,92 %.",d:1,why:"Diagnostiška: pasiūla smarkiai sumažėjo – mažiau naujų knygų, ypač kaimuose."},
+ {id:"D",t:"Tarpbibliotekinis abonementas ir knygomatai",r:"Užklausų kitoms bibliotekoms +50 % (126 → 189), per knygomatus išduota +41,1 % (1 741 leidinys).",d:1,why:"Diagnostiška: žmonės aktyviai ieško konkrečių knygų, kurių vietoje nėra."},
+ {id:"E",t:"Renginių skaičius",r:"Kultūros renginių +5,4 % (1 735), parodų +4,7 % (530).",d:0,why:"Nediagnostiška: renginių skaičius nepatvirtina ir nepaneigia, ar žmonės nebeskaito."},
+ {id:"F",t:"Interneto naudojimas bibliotekose",r:"87 659 interneto seansai, iš jų 76,4 % – bevieliu ryšiu.",d:0,why:"Nediagnostiška: rodo, kad biblioteka naudojama kaip erdvė, bet ne tai, kodėl ima mažiau knygų."}];
+const DIAG=[["neskaito","Žmonės nebeskaito"],["pasiula","Per mažai naujų knygų: pasiūla neatitinka paklausos"],["renginiai","Per mažai renginių"],["internetas","Internetas išstumia knygas"]];
+function r2(){
+ const d=S._r2||(S._r2={stage:0,pick:[]});
+ if(d.stage===0){
+  app.innerHTML=`<div class="reveal">${head(1)}<div class="panel"><p>Tarybos posėdyje skamba nuomonė:</p><p class="quote">„Kaimo bibliotekų skaitytojai nyksta, nes žmonės nebeskaito. Ten investuoti nebeverta.“</p><p class="muted">Simuliacijos veikėjas – tarybos narys.</p>
+  <p>Prieš atsakant galite atsiversti <b>tris</b> duomenų rinkinius iš šešių. Visi – iš 2025 m. ataskaitos.</p>
+  <div id="cards">${CARDS.map(c=>`<label class="opt"><input type="checkbox" value="${c.id}"><b>${c.t}</b></label>`).join("")}</div>
+  <p id="e" class="err hidden">Pasirinkite lygiai tris.</p><button class="btn block" id="ok">Atsiversti duomenis</button></div></div>`;
+  $("#ok").onclick=()=>{const p=[...document.querySelectorAll("#cards input:checked")].map(x=>x.value);if(p.length!==3){$("#e").classList.remove("hidden");return}d.pick=p;d.stage=1;save();r2()};
+ } else {
+  const got=CARDS.filter(c=>d.pick.includes(c.id));
+  app.innerHTML=`<div class="reveal">${head(1)}<div class="panel"><h3>Duomenys</h3>${got.map(c=>`<p><b>${c.t}.</b><br>${c.r}</p>`).join("")}</div>
+  <div class="panel"><p>Kokia pagrindinė priežastis, kad kaimo bibliotekose mažėja vartotojų ir išduoties?</p>${radios("dg",DIAG)}
+  <p id="e" class="err hidden">Pasirinkite vieną.</p><button class="btn block" id="ok">Pateikti diagnozę</button></div></div>`;
+  $("#ok").onclick=()=>{const v=val("dg");if(!v){$("#e").classList.remove("hidden");return}
+   const diag=got.filter(c=>c.d).length;
+   result(1,clamp(diag*6+(v==="pasiula"?2:0),0,20),`<h3>Duomenys rodo pasiūlos problemą</h3>
+   <p>Apsilankymai auga, paklausa konkrečioms knygoms (tarpbibliotekinis abonementas, knygomatai) auga, o naujų knygų gaunama trečdaliu mažiau. Tą pačią išvadą daro ir pati biblioteka savo ataskaitoje: pagrindinė problema – mažėjantis naujų dokumentų srautas.</p>
+   <p>Jūsų pasirinkimai:${got.map(c=>`<br>${c.d?'<span class="tag ok">diagnostiški</span>':'<span class="tag bias">nediagnostiški</span>'} ${c.why}`).join("")}</p>
+   <p>${v==="neskaito"?"Diagnozė „nebeskaito“ būtų pateisinusi investicijų mažinimą – ir dar labiau sumažinusi pasiūlą. Tai savaime išsipildanti pranašystė.":v==="pasiula"?"Diagnozė atitinka duomenis.":"Diagnozė neatitinka duomenų: žmonės ateina ir ieško knygų, bet randa mažiau naujų."}</p>`,{pick:d.pick,dg:v});
+  };
+ }
+}
+
+/* ===== 3. Tinklo sprendimas (dvi formuluotės) ===== */
+function r3(){
+ const A=S.frame==="A";
+ const optRe=A?["reforma","Išsaugoti 28 kaimo bibliotekas ir sustiprinti jas naujomis knygomis","6 mažiausių bibliotekų skaitytojus aptarnauti knygnešyste ir knygomatais; sutaupytos lėšos – naujoms knygoms visame tinkle."]:["reforma","Uždaryti 6 mažiausias kaimo bibliotekas","Jų skaitytojus aptarnauti knygnešyste ir knygomatais; sutaupytos lėšos – naujoms knygoms visame tinkle."];
+ app.innerHTML=`<div class="reveal">${head(2)}
+ <div class="panel"><p>Savivaldybė svarsto 2027 m. biudžetą. Papildomų lėšų knygoms nenumatyta. Bibliotekos taryba turi pateikti siūlymą dėl kaimo bibliotekų tinklo.</p>
+ <div class="kpis"><div class="kpi"><b>34</b><span>kaimo bibliotekos</span></div><div class="kpi"><b>3 399</b><span>jų vartotojai (−178 per metus)</span></div><div class="kpi"><b>77 %</b><span>biudžeto – darbo užmokestis</span></div><div class="kpi"><b>216</b><span>skaitytojų jau gauna knygnešystę</span></div></div>
+ <p class="muted">Simuliacijos scenarijus, pagrįstas ataskaitos duomenimis.</p>
+ ${radios("ch",[optRe,["status","Palikti tinklą nepakeistą","Naujų knygų srautas toliau mažės."],["duomenys","Prieš sprendžiant surinkti kiekvienos bibliotekos duomenis ir sutarti vertinimo kriterijus","Vartotojai, apsilankymai, atstumas iki artimiausios bibliotekos, gyventojų nuomonė. Sprendimas – po 3 mėnesių."]])}</div>
+ <div class="panel"><p>Kas turėtų priimti galutinį sprendimą?</p>${radios("who",[["dir","Bibliotekos direktorius"],["taryba","Savivaldybės taryba pagal iš anksto paskelbtus kriterijus, išklausiusi gyventojus"],["balsas","Gyventojų balsavimas internetu"]])}
+ <p id="e" class="err hidden">Atsakykite į abu klausimus.</p><button class="btn block" id="ok">Pateikti siūlymą</button></div></div>`;
+ $("#ok").onclick=()=>{const ch=val("ch"),who=val("who");if(!ch||!who){$("#e").classList.remove("hidden");return}
+  const sc={duomenys:14,reforma:10,status:8}[ch]+(who==="taryba"?6:who==="balsas"?2:0);
+  result(2,sc,`<h3>Jūsų grupė matė formuluotę ${S.frame}</h3>
+  <p>Pusė komandų tą patį sprendimą matė kaip <b>„Išsaugoti 28 bibliotekas“</b>, kita pusė – kaip <b>„Uždaryti 6 bibliotekas“</b>. Turinys identiškas. Dėstytojo ekrane matysite, ar formuluotė pakeitė pasirinkimus.</p>
+  <p>${ch==="duomenys"?'<span class="tag ok">procesas</span> Iš anksto sutarti kriterijai apsaugo nuo to, kad sprendimą nulemtų formuluotė, garsiausias balsas ar emocija.':ch==="status"?'<span class="tag bias">status quo</span> Nieko nekeisti atrodo saugiausia, bet kaštai tęsiasi: naujų knygų mažės visose 34 bibliotekose.':'<span class="tag">sprendimas be kriterijų</span> Gali būti teisingas, bet priimtas be duomenų apie kiekvieną biblioteką ir be sutartų kriterijų.'}</p>`,{frame:S.frame,ch,who});
+ };
+}
+
+/* ===== 4. Pasirinkimų architektūra ===== */
+const R4={
+ def:[["aktyvus","Aktyvus pasirinkimas","Registruojantis į renginį klausiama: „Ar norite skaitytojo pažymėjimo?“",2.0,0],["optout","Registracija į renginį = skaitytojo pažymėjimas","Atsisakoma vienu paspaudimu.",3.0,0],["nieko","Nieko nekeisti","Kas nori, registruojasi skaitytojų aptarnavimo skyriuje.",1.0,0],["mokama","Pažymėta mokama „Bibliotekos bičiulio“ narystė","Atsisakyti – tik raštu.",3.6,1]],
+ fr:[["online","Registracija internetu per iBiblioteka.lt, pažymėjimas atsiimamas pirmo apsilankymo metu","",1.5],["vietoje","Registracija vietoje su asmens dokumentu, darbo valandomis","",0.7],["knygomatas","Registracija prie knygomato, nuskenavus QR kodą","",1.3]],
+ fm:[["gain","„Su pažymėjimu – naujos knygos ir užsakymas iš kitų bibliotekų nemokamai“","Nauda",1.15],["social","„1 268 žmonės jau turi Viešosios bibliotekos pažymėjimą“","Socialinė norma, tikras skaičius",1.25],["loss","„Neprarask galimybės – naujos knygos išgraibstomos per savaitę“","Praradimo vengimas – ar tai tiesa?",1.1]],
+ tm:[["po","Renginio ar edukacijos pabaigoje","",1.4],["pries","Registruojantis į renginį","",1.2],["sav","Laišku po savaitės","",0.6]]};
+function r4(){
+ app.innerHTML=`<div class="reveal">${head(3)}
+ <div class="panel"><p>Tikslas – daugiau renginių ir edukacijų dalyvių paversti registruotais vartotojais. Viešojoje bibliotekoje 2025 m. renginiuose dalyvavo <b>1 528</b>, edukacijose – <b>869</b> žmonės, o naujai užregistruoti <b>403</b> vartotojai.</p><p class="muted">Jūsų dizainą įvertins elgsenos modelis. Modelio rezultatas – simuliacija, ne prognozė.</p></div>
+ <div class="panel"><h3>Numatytoji parinktis</h3>${radios("def",R4.def)}</div>
+ <div class="panel"><h3>Trintis</h3>${radios("fr",R4.fr)}</div>
+ <div class="panel"><h3>Rėminimas</h3>${radios("fm",R4.fm)}</div>
+ <div class="panel"><h3>Laikas</h3>${radios("tm",R4.tm)}<p id="e" class="err hidden">Pasirinkite po vieną kiekvienoje grupėje.</p><button class="btn block" id="ok">Paleisti modelį</button></div></div>`;
+ $("#ok").onclick=()=>{const c={def:val("def"),fr:val("fr"),fm:val("fm"),tm:val("tm")};if(Object.values(c).some(x=>!x)){$("#e").classList.remove("hidden");return}
+  const f=(arr,k)=>arr.find(x=>x[0]===k);const D=f(R4.def,c.def),dark=D[4]===1;
+  const part=2397;let conv=0.06*D[3]*f(R4.fr,c.fr)[3]*f(R4.fm,c.fm)[3]*f(R4.tm,c.tm)[3];conv=clamp(conv*(1+gauss()*0.05),0.01,0.7);
+  let extra=Math.round(part*conv);let active=Math.round(extra*(dark?0.35:0.6));
+  let sc=clamp(Math.round(active/220*20),0,20);if(dark)sc=Math.max(0,sc-8);
+  const fmTruth=c.fm==="loss";
+  result(3,sc,`<h3>Modelis: +${nf(extra)} naujų vartotojų per metus</h3>
+  <p>Iš jų aktyviai besinaudojančių po pusmečio – apie ${nf(active)}. Palyginimui: 2025 m. Viešojoje bibliotekoje naujai užregistruoti 403.</p>
+  <div class="hbars"><div class="hbar"><span>2025 m. faktas</span><div class="t"><i style="width:${403/Math.max(403+extra,800)*100}%"></i></div><b>403</b></div><div class="hbar hl"><span>Su jūsų dizainu</span><div class="t"><i style="width:${(403+extra)/Math.max(403+extra,800)*100}%"></i></div><b>${nf(403+extra)}</b></div></div>
+  ${dark?'<p><span class="tag bias">tamsusis šablonas</span> Daug „sutikimų“, bet po pirmų nuskaitymų – skundai ir straipsnis vietos spaudoje. Biudžetinei įstaigai tai ypač skaudu: pasitikėjimas yra jos kapitalas.</p>':""}
+  ${c.fr==="vietoje"?'<p><span class="tag bias">trintis</span> Registracija tik darbo valandomis su dokumentu „suvalgė“ didžiąją dalį efekto.</p>':""}
+  ${fmTruth?'<p><span class="tag bias">patikrinkite teiginį</span> Ar tikrai naujos knygos „išgraibstomos per savaitę“? Jei ne – tai manipuliacija, net jei veikia.</p>':""}
+  ${c.fm==="social"?'<p><span class="tag ok">tikra socialinė norma</span> 1 268 – tikras 2025 m. Viešosios bibliotekos vartotojų skaičius.</p>':""}
+  ${c.def==="optout"&&!dark?'<p><span class="tag ok">numatytoji parinktis</span> Nemokama, lengvai atsisakoma – stipriausias svertas be manipuliacijos.</p>':""}`,{c,extra});
+ };
+}
+
+/* ===== 5. 2026 m. tikslai ir premortem ===== */
+const T5={
+ mus:[["3000","3 000 – kaip 2025 m. plane"],["2500","2 500"],["1600","1 600"],["1200","1 200"]],
+ phys:[["80000","80 000 – kaip 2025 m. plane"],["103000","103 000"],["120000","120 000"]],
+ virt:[["70000","70 000 – kaip 2025 m. plane"],["58000","58 000 – kaip 2024 m."],["23000","23 000 – pagal naują apskaitą"]]};
+const FAIL=[["f1","Tikslai vėl buvo nustatyti pagal norą, o ne pagal faktą"],["f2","Bibliotekininkai nedrįso prieštarauti vadovybei"],["f3","Pertvarka užsitęsė, nors rodikliai blogėjo"],["f4","Pakeista apskaita, ir niekas nepastebėjo, kad duomenys nepalyginami"]];
+const GUARD=[["g1","Tikslai – nuo kelerių metų fakto (bazinės normos)"],["g2","Anoniminis darbuotojų balsavimas ir „raudonoji komanda“"],["g3","Ketvirtinė peržiūra su iš anksto sutartu sustabdymo slenksčiu"],["g4","Apskaitos pokyčių žurnalas ir dvejų metų palyginimas"],["g5","Daugiau reklamos socialiniuose tinkluose"]];
+const MATCH={f1:"g1",f2:"g2",f3:"g3",f4:"g4"};
+function r5(){
+ app.innerHTML=`<div class="reveal">${head(4)}
+ <div class="panel"><p>Reikia nustatyti 2026 m. tikslus. Duomenys:</p>
+ <div class="tablewrap"><table><thead><tr><th>Rodiklis</th><th>2024 faktas</th><th>2025 planas</th><th>2025 faktas</th></tr></thead><tbody>
+ <tr><td>Muziejų lankytojai</td><td>1 476</td><td>3 000</td><td>1 482</td></tr><tr><td>Fiziniai apsilankymai</td><td>98 286</td><td>80 000</td><td>101 965</td></tr><tr><td>Virtualūs apsilankymai</td><td>58 106</td><td>70 000</td><td>21 403*</td></tr></tbody></table></div><p class="cite">* Nauja apskaitos metodika.</p></div>
+ <div class="panel"><h3>Muziejų lankytojai 2026 m.</h3>${radios("mus",T5.mus)}</div>
+ <div class="panel"><h3>Fiziniai apsilankymai 2026 m.</h3>${radios("phys",T5.phys)}</div>
+ <div class="panel"><h3>Virtualūs apsilankymai 2026 m.</h3>${radios("virt",T5.virt)}</div>
+ <div class="panel"><h3>Premortem</h3><p>Įsivaizduokite: 2029 m. strategija žlugo. Prie kiekvienos priežasties priskirkite apsaugą.</p>
+ ${FAIL.map(([id,t])=>`<label class="field"><span>${t}</span><select id="${id}"><option value="">Pasirinkite apsaugą</option>${GUARD.map(([g,gt])=>`<option value="${g}">${gt}</option>`).join("")}</select></label>`).join("")}
+ <p id="e" class="err hidden">Atsakykite į visus klausimus.</p><button class="btn block" id="ok">Pateikti planą</button></div></div>`;
+ $("#ok").onclick=()=>{const t={mus:val("mus"),phys:val("phys"),virt:val("virt")};const m=FAIL.map(([id])=>$("#"+id).value);
+  if(Object.values(t).some(x=>!x)||m.some(x=>!x)){$("#e").classList.remove("hidden");return}
+  const hits=FAIL.filter(([id],i)=>MATCH[id]===m[i]).length;
+  const sc=(t.mus==="1600"?4:t.mus==="1200"?2:0)+(t.phys==="103000"?4:0)+(t.virt==="23000"?4:0)+hits*2;
+  result(4,clamp(sc,0,20),`<h3>${t.mus==="3000"||t.phys==="80000"||t.virt==="70000"?"Dalis tikslų – pagal seną planą, ne pagal faktą":"Tikslai pagrįsti faktu"}</h3>
+  <p>${t.mus==="3000"?'<span class="tag bias">inkaras</span> 3 000 muziejų lankytojų – planas, kurio nepasiekta dvejus metus iš eilės (1 476 ir 1 482). Jis kartojamas, nes yra atskaitos taškas, o ne todėl, kad realus.':t.mus==="2500"?'<span class="tag bias">nepakankamas koregavimas</span> Nuo 3 000 pasislinkta, bet ne iki fakto.':'<span class="tag ok">bazinė norma</span> Tikslas atitinka dvejų metų faktą su nedideliu augimu.'}</p>
+  <p>${t.phys==="80000"?'<span class="tag bias">„saugus“ planas</span> Tikslas žemiau fakto garantuoja „viršijimą“, bet nieko nesako apie pažangą.':t.phys==="120000"?'<span class="tag bias">optimizmas</span> +18 % per metus be naujų priemonių – planavimo klaida.':'<span class="tag ok">realu</span> Tikslas šiek tiek virš fakto.'}</p>
+  <p>${t.virt==="23000"?'<span class="tag ok">apskaitos pokytis atpažintas</span> Naujas tikslas pagal naują metodiką.':'<span class="tag bias">nepalyginami duomenys</span> 2025 m. pakeista virtualių apsilankymų apskaita – senas skaičius naujai metodikai netinka.'}</p>
+  <p>Premortem: teisingai suporuota ${hits} iš 4.</p>`,{t,hits});
+ };
+}
+
+/* ===== Pabaiga ===== */
+function checksum(sc){const a="ABCDEFGHJKLMNPRSTUVZ23456789";let s=7;sc.forEach((v,i)=>s=(s*31+v*(i+3))%a.length);return a[s]}
+function codeOf(sc){return sc.map(v=>String(v).padStart(2,"0")).join("-")+"-"+checksum(sc)}
+function finish(){
+ const sc=S.scores.map(v=>v||0),tot=sc.reduce((a,b)=>a+b,0);report("done");
+ app.innerHTML=`<div class="reveal"><h2>${esc(S.team)}: ${tot} / 100</h2>
+ <div class="panel">${ROUNDS.map((r,i)=>`<div class="gauge"><span style="width:10em">${r.title}</span><div class="bar"><i style="width:${sc[i]*5}%;background:${COLORS[i]}"></i></div><b>${sc[i]}</b></div>`).join("")}</div>
+ ${SESSION?'<div class="panel"><p><span class="tag ok">išsiųsta</span> Rezultatai jau dėstytojo ekrane.</p></div>':`<div class="panel"><p>Parodykite šį kodą dėstytojui:</p><div class="code">${codeOf(sc)}</div></div>`}
+ <div class="panel theory"><h3>Ką perkelti į savo II dalies strategiją</h3><ul><li>Atsiskaitykite subalansuotais rodikliais ir lyginkite su faktu, ne vien su planu.</li><li>Kiekvienai hipotezei – duomenys, kurie galėtų ją paneigti.</li><li>Sudėtingiems sprendimams – iš anksto sutarti kriterijai, kad nenulemtų formuluotė.</li><li>Elgsenos tikslui – numatytoji parinktis, mažiau trinties, tinkamas laikas ir etikos patikra.</li><li>Tikslams – bazinė norma, o ne pernykštis noras.</li></ul></div>
+ <button class="btn ghost block" id="rs">Pradėti iš naujo</button></div>`;
+ $("#rs").onclick=()=>{if(confirm("Ištrinti šios komandos rezultatus šiame telefone?"))reset()};
+}
+
+/* ===== Dėstytojo ekranas ===== */
+const FKEY="prsvb-fac-v1";
+const SLIDES=[
+ ()=>`<p class="muted">Elgsenos strategija · tikras atvejis</p><h1>Biblioteka 36 vietose</h1><p class="big">${ORG}: apsilankymai auga, vartotojų ir knygų mažėja. Ką rodo skaičiai ir kokius sprendimus jie pakiša?</p>${sourceNote()}`,
+ ()=>`<h2>Organizacija</h2>${kpis()}<p class="big">Viešoji biblioteka, Ramygalos miesto biblioteka ir 34 kaimo bibliotekos. 71,75 etato.</p>`,
+ ()=>`<h2>Planas ir faktas, 2025</h2>${planTable()}`,
+ ()=>`<h2>Centras auga, kaimai traukiasi</h2>${splitChart()}`,
+ ()=>`<h2>Kam išleidžiami pinigai</h2>${budgetChart()}`,
+ ()=>`<h2>Naujų knygų mažėja</h2>${supplyChart()}`,
+ ()=>`<h2>Jūsų vaidmuo</h2><p class="big">Jūs – bibliotekos strateginė taryba. Penki sprendimai, visi duomenys pateikti. Nuskenuokite QR kodą.</p><div id="qr2" style="background:#fff;padding:10px;border-radius:10px;display:inline-block;width:240px"></div>`];
+function facilitator(){
+ app.className="wrap wide";
+ let session=store.get(FKEY+"-session",null);if(!session){session="vikobib-"+uid()+uid().slice(0,4);store.set(FKEY+"-session",session)}
+ const studentLink=BASE_URL+"?s="+session;
+ app.innerHTML=`<div class="reveal">
+ <div class="row" style="justify-content:space-between;align-items:center;margin:12px 0 14px"><h1 style="margin:0;font-size:1.6rem">Dėstytojo ekranas</h1><div class="row"><span class="tag" id="live">ryšys: jungiamasi…</span><button class="btn ghost" id="back">Grįžti</button></div></div>
+ <div class="tabs" role="tablist"><button data-v="case" aria-selected="true">1. Atvejis</button><button data-v="live" aria-selected="false">2. Gyvai</button><button data-v="deb" aria-selected="false">3. Aptarimas</button></div>
+ <section id="v-case"><div class="panel slides"><div class="slide" id="slide"></div><div class="slidenav"><button class="btn ghost" id="prev">Atgal</button><span class="muted" id="sn"></span><button class="btn" id="nxt">Toliau</button></div></div><p class="muted">Klaviatūra: rodyklės ← →.</p></section>
+ <section id="v-live" class="hidden"><div class="grid2">
+  <div><div class="panel" style="text-align:center"><h3>Prisijunkite telefonu</h3><div id="qr"></div><p class="cite" style="word-break:break-all;margin-top:8px">${esc(studentLink)}</p><button class="btn ghost" id="newses" style="margin-top:6px">Nauja sesija</button></div>
+  <div class="panel"><h3>Kodas rankiniu būdu</h3><p class="muted">Jei telefonas neprisijungė prie sesijos.</p><label class="field"><span>Komanda</span><input id="cn" type="text" maxlength="24"></label><label class="field"><span>Kodas</span><input id="cc" type="text" placeholder="12-18-09-16-14-K"></label><p id="ce" class="err hidden">Kodas netinka.</p><button class="btn block" id="add">Pridėti</button></div></div>
+  <div><div class="panel"><h3>Komandos</h3><div class="legend">${ROUNDS.map((r,i)=>`<span style="--c:${COLORS[i]}">${r.title}</span>`).join("")}</div><div class="tablewrap"><table><thead><tr><th>Komanda</th><th>Etapas</th><th>Balai</th><th>Iš viso</th></tr></thead><tbody id="tb"></tbody></table></div></div>
+  <div class="panel"><h3>Sprendimai gyvai</h3><div class="tabs" id="ltabs">${ROUNDS.map((r,i)=>`<button data-i="${i}" aria-selected="${i===0}">${i+1}. ${r.title}</button>`).join("")}</div><div id="agg"></div></div></div></div></section>
+ <section id="v-deb" class="hidden"><div class="panel"><div class="tabs" id="dtabs">${ROUNDS.map((r,i)=>`<button data-i="${i}" aria-selected="${i===0}">${i+1}. ${r.concept}</button>`).join("")}</div><div id="deb"></div></div></section></div>`;
+ let es=null;
+ $("#back").onclick=()=>{document.onkeydown=null;if(es)es.close();history.replaceState(null,"",BASE_URL);home()};
+ const views=["case","live","deb"];
+ document.querySelectorAll("[data-v]").forEach(b=>b.onclick=()=>{views.forEach(v=>$("#v-"+v).classList.toggle("hidden",v!==b.dataset.v));document.querySelectorAll("[data-v]").forEach(x=>x.setAttribute("aria-selected",String(x===b)))});
+ const qr=(el,v,size)=>{el.innerHTML="";try{new QRCode(el,{text:v,width:size,height:size,colorDark:"#18212F",colorLight:"#ffffff",correctLevel:QRCode.CorrectLevel.M})}catch(e){el.textContent=v}};
+ let si=0;const show=()=>{$("#slide").innerHTML=`<div class="reveal">${SLIDES[si]()}</div>`;$("#sn").textContent=`${si+1} / ${SLIDES.length}`;$("#prev").disabled=si===0;$("#nxt").disabled=si===SLIDES.length-1;const q=$("#qr2");if(q)qr(q,studentLink,220)};
+ $("#prev").onclick=()=>{if(si>0){si--;show()}};$("#nxt").onclick=()=>{if(si<SLIDES.length-1){si++;show()}};
+ document.onkeydown=e=>{if($("#v-case").classList.contains("hidden")||/INPUT|SELECT/.test(document.activeElement.tagName))return;if(e.key==="ArrowRight")$("#nxt").click();if(e.key==="ArrowLeft")$("#prev").click()};
+ qr($("#qr"),studentLink,300);show();
+ $("#newses").onclick=()=>{if(confirm("Pradėti naują sesiją? Dabartinių komandų sąrašas bus išvalytas.")){store.del(FKEY+"-session");store.set(FKEY,{});if(es)es.close();facilitator()}};
+ /* būsena */
+ let T=store.get(FKEY,{});
+ const ingest=ev=>{if(!ev||!ev.id||!ev.n)return;const t=T[ev.id]||(T[ev.id]={n:String(ev.n).slice(0,24),r:0,sc:[null,null,null,null,null],d:{}});
+  t.n=String(ev.n).slice(0,24);if(Array.isArray(ev.sc))ev.sc.forEach((v,i)=>{if(v!=null&&i<5)t.sc[i]=clamp(+v||0,0,20)});if(typeof ev.r==="number")t.r=Math.max(t.r,ev.k==="choice"?ev.r+1:ev.r);if(ev.k==="choice"&&typeof ev.r==="number"){t.d[ev.r]=ev.d;t.sc[ev.r]=clamp(+ev.s||0,0,20)}if(ev.k==="done")t.r=5;store.set(FKEY,T);render()};
+ const render=()=>{
+  const rows=Object.values(T).sort((a,b)=>b.sc.reduce((x,y)=>x+(y||0),0)-a.sc.reduce((x,y)=>x+(y||0),0));
+  $("#tb").innerHTML=rows.length?rows.map(t=>{const tot=t.sc.reduce((a,b)=>a+(b||0),0);return `<tr><td><b>${esc(t.n)}</b></td><td>${t.r>=5?'<span class="tag ok">baigė</span>':`${t.r+1} / 5`}</td><td><div class="stack">${t.sc.map((v,i)=>`<i style="width:${(v||0)}%;background:${COLORS[i]}" title="${ROUNDS[i].title}: ${v??"–"}"></i>`).join("")}</div></td><td>${tot}</td></tr>`}).join(""):`<tr><td colspan="4" class="muted">Laukiama komandų. Kai komanda pradės, ji atsiras čia.</td></tr>`;
+  aggr(curAgg);
+ };
+ const bars=(title,counts,labels)=>{const tot=Object.values(counts).reduce((a,b)=>a+b,0)||1;return `<h3>${title}</h3><div class="hbars">${labels.map(([k,l])=>`<div class="hbar"><span>${esc(l)}</span><div class="t"><i style="width:${(counts[k]||0)/tot*100}%"></i></div><b>${counts[k]||0}</b></div>`).join("")}</div>`};
+ const cnt=(arr)=>arr.reduce((m,k)=>{m[k]=(m[k]||0)+1;return m},{});
+ let curAgg=0;
+ const aggr=i=>{curAgg=i;document.querySelectorAll("#ltabs button").forEach(b=>b.setAttribute("aria-selected",String(+b.dataset.i===i)));
+  const D=Object.values(T).map(t=>t.d[i]).filter(Boolean);
+  if(!D.length){$("#agg").innerHTML='<p class="muted">Šio sprendimo dar niekas nepateikė.</p>';return}
+  let h=`<p class="muted">Pateikė: ${D.length} kom.</p>`;
+  if(i===0){h+=bars("Sakinys tarybai",cnt(D.map(d=>d.q1)),R1A.map(([k,,s])=>[k,s]))+bars("Ką reiškia plano viršijimas",cnt(D.map(d=>d.q2)),R1B)}
+  if(i===1){h+=bars("Atsiversti duomenys",cnt(D.flatMap(d=>d.pick)),CARDS.map(c=>[c.id,(c.d?"✓ ":"")+c.t]))+bars("Diagnozė",cnt(D.map(d=>d.dg)),DIAG)}
+  if(i===2){["A","B"].forEach(fr=>{const X=D.filter(d=>d.frame===fr);h+=bars(`Formuluotė ${fr}: ${fr==="A"?"„Išsaugoti 28“":"„Uždaryti 6“"} (${X.length} kom.)`,cnt(X.map(d=>d.ch)),[["reforma","Pertvarka"],["status","Nieko nekeisti"],["duomenys","Pirma – duomenys ir kriterijai"]])});h+=bars("Kas sprendžia",cnt(D.map(d=>d.who)),[["dir","Direktorius"],["taryba","Taryba pagal kriterijus"],["balsas","Balsavimas internetu"]])}
+  if(i===3){h+=bars("Numatytoji parinktis",cnt(D.map(d=>d.c.def)),R4.def.map(x=>[x[0],x[1]]))+bars("Trintis",cnt(D.map(d=>d.c.fr)),R4.fr.map(x=>[x[0],x[1]]))+`<p>Vidutinis modelio rezultatas: +${nf(Math.round(D.reduce((a,d)=>a+(+d.extra||0),0)/D.length))} naujų vartotojų.</p>`}
+  if(i===4){h+=bars("Muziejų lankytojų tikslas",cnt(D.map(d=>d.t.mus)),T5.mus)+bars("Virtualių apsilankymų tikslas",cnt(D.map(d=>d.t.virt)),T5.virt)}
+  $("#agg").innerHTML=h};
+ document.querySelectorAll("#ltabs button").forEach(b=>b.onclick=()=>aggr(+b.dataset.i));
+ render();
+ /* gyvas ryšys */
+ const setLive=(ok,txt)=>{const el=$("#live");if(!el)return;el.textContent=txt;el.className="tag "+(ok?"ok":"bias")};
+ try{
+  fetch(RELAY+session+"/json?poll=1&since=all").then(r=>r.ok?r.text():"").then(t=>{t.split("\n").forEach(l=>{try{const m=JSON.parse(l);if(m.event==="message")ingest(JSON.parse(m.message))}catch(e){}})}).catch(()=>{});
+  es=new EventSource(RELAY+session+"/sse");
+  es.onopen=()=>setLive(true,"ryšys: gyvai");
+  es.onmessage=e=>{try{const m=JSON.parse(e.data);if(m.event==="message")ingest(JSON.parse(m.message))}catch(err){}};
+  es.onerror=()=>setLive(false,"ryšio nėra – naudokite kodus");
+ }catch(e){setLive(false,"ryšio nėra – naudokite kodus")}
+ $("#add").onclick=()=>{const n=$("#cn").value.trim(),c=$("#cc").value.trim().toUpperCase().replace(/\s/g,"");const m=c.match(/^(\d{1,2})-(\d{1,2})-(\d{1,2})-(\d{1,2})-(\d{1,2})-([A-Z0-9])$/);
+  if(!n||!m){$("#ce").classList.remove("hidden");return}const sc=m.slice(1,6).map(Number);if(sc.some(v=>v>20)||checksum(sc)!==m[6]){$("#ce").classList.remove("hidden");return}
+  $("#ce").classList.add("hidden");T["k-"+n]={n,r:5,sc,d:{}};store.set(FKEY,T);$("#cn").value="";$("#cc").value="";render()};
+ const deb=i=>{document.querySelectorAll("#dtabs button").forEach(b=>b.setAttribute("aria-selected",String(+b.dataset.i===i)));$("#deb").innerHTML=`<div class="theory">${THEORY[ROUNDS[i].id]}</div><h3>Klausimai aptarimui</h3><ul>${DEBRIEF_Q[ROUNDS[i].id].map(q=>`<li>${q}</li>`).join("")}</ul>`};
+ document.querySelectorAll("#dtabs button").forEach(b=>b.onclick=()=>deb(+b.dataset.i));deb(0);
+}
+home();
+</script>
+</body>
+</html>
