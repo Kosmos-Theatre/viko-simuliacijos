@@ -248,18 +248,19 @@ function done(i,score,data,html){
 
 function home(){
  app.className="wrap";
- app.innerHTML=`<section class="hero reveal"><h1>Netflix, antras bandymas</h1>
+ if(QS.get("f")==="1"&&!home._done){home._done=1;return facilitator()}
+ app.innerHTML=`<section class="hero reveal"><h1 id="ttl">Netflix, antras bandymas</h1>
  <p class="lede">2011 m. Netflix strategija nepasiteisino. Jūsų komanda pirmiausia išsiaiškins kodėl, o tada sukurs strategiją, kuri būtų pavykusi.</p></section>
  <div class="panel"><h2>Esu komandoje</h2>
  ${SESSION?'<p><span class="tag ok">prisijungta prie paskaitos</span> Dėstytojas matys jūsų sprendimus ir argumentus.</p>':'<p class="muted">Vienas telefonas komandai. Aptarkite kartu, įveskite – vienas.</p>'}
  <label class="field"><span>Komandos pavadinimas</span><input id="tname" type="text" maxlength="24" autocomplete="off"></label>
  <button class="btn block" id="start">Pradėti</button>
  ${S?`<p style="margin-top:12px"><button class="btn ghost block" id="cont">Tęsti: ${esc(S.team)}</button></p>`:""}</div>
- ${QS.get("s")?"":`<p style="text-align:center"><button class="btn ghost" id="fac">Dėstytojo ekranas</button></p>`}`;
+`;
  $("#start").onclick=()=>{const n=$("#tname").value.trim();if(!n){$("#tname").focus();$("#tname").style.borderColor="var(--bias)";return}
   S={id:uid(),team:n,step:0,scores:[null,null,null,null,null,null],data:{}};save();report("join");intro()};
  if(S)$("#cont").onclick=play;
- if($("#fac"))$("#fac").onclick=facilitator;
+ let taps=0;$("#ttl").onclick=()=>{if(++taps>=5)facilitator()};
 }
 function intro(){app.innerHTML=`<div class="reveal"><h2>Atvejis</h2>${caseBox()}<button class="btn block" id="go">Į 1 dalį: kodėl nepasiteisino</button></div>`;$("#go").onclick=play;window.scrollTo(0,0)}
 function play(){while(S.step<6&&S.scores[S.step]!=null){S.step++;save()}if(S.step>=6)return finish();[sd,sp,sa,sk,st,ss][S.step]();window.scrollTo(0,0)}
