@@ -153,9 +153,10 @@ textarea{width:100%;min-height:84px;padding:.6em .8em;border:1.5px solid var(--l
 "use strict";
 const RELAY="https://ntfy.sh/";
 const QS=new URLSearchParams(location.search);
-const SESSION=QS.get("s");
-const BASE_URL=location.origin+location.pathname;
 const ON_GH=/github\.io$/.test(location.hostname);
+const DAY_SESSION="vikonflx-"+new Date().toISOString().slice(0,10).replace(/-/g,"");
+const SESSION=QS.get("s")||(ON_GH&&QS.get("f")!=="1"?DAY_SESSION:null);
+const BASE_URL=location.origin+location.pathname;
 const ART_URL="https://claude.ai/artifact/GcNAszQ9Kn2BhKKukCnsVV";
 function relaySend(evt){if(!SESSION)return;try{fetch(RELAY+SESSION,{method:"POST",body:JSON.stringify(evt)}).catch(()=>{})}catch(e){}}
 const $=s=>document.querySelector(s);
@@ -254,7 +255,7 @@ function home(){
  <label class="field"><span>Komandos pavadinimas</span><input id="tname" type="text" maxlength="24" autocomplete="off"></label>
  <button class="btn block" id="start">Pradėti</button>
  ${S?`<p style="margin-top:12px"><button class="btn ghost block" id="cont">Tęsti: ${esc(S.team)}</button></p>`:""}</div>
- ${SESSION?"":`<p style="text-align:center"><button class="btn ghost" id="fac">Dėstytojo ekranas</button></p>`}`;
+ ${QS.get("s")?"":`<p style="text-align:center"><button class="btn ghost" id="fac">Dėstytojo ekranas</button></p>`}`;
  $("#start").onclick=()=>{const n=$("#tname").value.trim();if(!n){$("#tname").focus();$("#tname").style.borderColor="var(--bias)";return}
   S={id:uid(),team:n,step:0,scores:[null,null,null,null,null,null],data:{}};save();report("join");intro()};
  if(S)$("#cont").onclick=play;
@@ -360,8 +361,8 @@ const SLIDES=[
  ()=>`<h2>Jūsų užduotis</h2><p class="big">1 dalis – diagnozė: kurie šališkumai nulėmė nesėkmę. 2 dalis – jūsų strategija: procesas, alternatyvos, kliento elgsena, bandymas, saugikliai.</p><div id="qr2" style="background:#fff;padding:10px;border-radius:10px;display:inline-block;width:240px"></div>`];
 function facilitator(){
  app.className="wrap wide";
- let session=store.get(FKEY+"-session",null);if(!session){session="vikonflx-"+uid()+uid().slice(0,4);store.set(FKEY+"-session",session)}
- const link=ON_GH?BASE_URL+"?s="+session:ART_URL;
+ let custom=store.get(FKEY+"-session",null);if(custom&&custom.day!==DAY_SESSION)custom=null;const session=custom?custom.id:DAY_SESSION;
+ const link=ON_GH?(custom?BASE_URL+"?s="+session:BASE_URL):ART_URL;
  app.innerHTML=`<div class="reveal">
  <div class="row" style="justify-content:space-between;align-items:center;margin:12px 0 14px"><h1 style="margin:0;font-size:1.6rem">Dėstytojo ekranas</h1><div class="row"><span class="tag" id="live">ryšys: jungiamasi…</span><button class="btn ghost" id="back">Grįžti</button></div></div>
  <div class="tabs"><button data-v="case" aria-selected="true">1. Atvejis</button><button data-v="live" aria-selected="false">2. Gyvai</button><button data-v="ideas" aria-selected="false">3. Komandų strategijos</button><button data-v="deb" aria-selected="false">4. Aptarimas</button></div>
@@ -382,12 +383,12 @@ function facilitator(){
  $("#prev").onclick=()=>{if(si>0){si--;show()}};$("#nxt").onclick=()=>{if(si<SLIDES.length-1){si++;show()}};
  document.onkeydown=e=>{if($("#v-case").classList.contains("hidden"))return;if(e.key==="ArrowRight")$("#nxt").click();if(e.key==="ArrowLeft")$("#prev").click()};
  qr($("#qr"),link,300);show();
- $("#newses").onclick=()=>{if(confirm("Pradėti naują sesiją? Komandų sąrašas bus išvalytas.")){store.del(FKEY+"-session");store.set(FKEY,{});if(es)es.close();facilitator()}};
- let T=store.get(FKEY,{});
+ $("#newses").onclick=()=>{if(confirm("Pradėti naują sesiją? Komandų sąrašas bus išvalytas, o QR kodas pasikeis (skaidrės QR nebetiks).")){store.set(FKEY+"-session",{id:"vikonflx-"+uid()+uid().slice(0,4),day:DAY_SESSION});if(es)es.close();facilitator()}};
+ let T=store.get(FKEY+"-t-"+session,{});
  const ingest=ev=>{if(!ev||!ev.id||!ev.n)return;const t=T[ev.id]||(T[ev.id]={n:"",r:0,sc:[null,null,null,null,null,null],d:{}});
   t.n=String(ev.n).slice(0,24);if(Array.isArray(ev.sc))ev.sc.forEach((v,i)=>{if(v!=null&&i<6)t.sc[i]=clamp(+v||0,0,20)});
   if(ev.k==="choice"&&typeof ev.r==="number"){t.d[ev.r]=ev.d;t.sc[ev.r]=clamp(+ev.s||0,0,20);t.r=Math.max(t.r,ev.r+1)}
-  if(ev.k==="done"){t.r=6;if(ev.o)t.o={loss:+ev.o.loss||0}}store.set(FKEY,T);render()};
+  if(ev.k==="done"){t.r=6;if(ev.o)t.o={loss:+ev.o.loss||0}}store.set(FKEY+"-t-"+session,T);render()};
  const bars=(title,counts,labels)=>{const tot=Object.values(counts).reduce((a,b)=>a+b,0)||1;return `<h3>${title}</h3><div class="hbars">${labels.map(([k,l])=>`<div class="hbar"><span>${esc(l)}</span><div class="t"><i style="width:${(counts[k]||0)/tot*100}%"></i></div><b>${counts[k]||0}</b></div>`).join("")}</div>`};
  const cnt=arr=>arr.reduce((m,k)=>{m[k]=(m[k]||0)+1;return m},{});
  let cur=0,curI=1;
@@ -413,7 +414,7 @@ function facilitator(){
  document.querySelectorAll("#dtabs button").forEach(b=>b.onclick=()=>deb(+b.dataset.i));deb(0);
  $("#add").onclick=()=>{const n=$("#cn").value.trim(),c=$("#cc").value.trim().toUpperCase().replace(/\s/g,"");const m=c.match(/^(\d{1,2})-(\d{1,2})-(\d{1,2})-(\d{1,2})-(\d{1,2})-(\d{1,2})-(\d{1,2})-([A-Z0-9])$/);
   if(!n||!m){$("#ce").classList.remove("hidden");return}const a=m.slice(1,8).map(Number);if(checksum(a)!==m[8]||a.slice(0,6).some((v,i)=>v>STEPS[i].max)){$("#ce").classList.remove("hidden");return}
-  $("#ce").classList.add("hidden");T["k-"+n]={n,r:6,sc:a.slice(0,6),d:{},o:{loss:a[6]*10000}};store.set(FKEY,T);$("#cn").value="";$("#cc").value="";render()};
+  $("#ce").classList.add("hidden");T["k-"+n]={n,r:6,sc:a.slice(0,6),d:{},o:{loss:a[6]*10000}};store.set(FKEY+"-t-"+session,T);$("#cn").value="";$("#cc").value="";render()};
  render();
  const setLive=(ok,txt)=>{const el=$("#live");if(!el)return;el.textContent=txt;el.className="tag "+(ok?"ok":"bias")};
  try{fetch(RELAY+session+"/json?poll=1&since=all").then(r=>r.ok?r.text():"").then(t=>t.split("\n").forEach(l=>{try{const m=JSON.parse(l);if(m.event==="message")ingest(JSON.parse(m.message))}catch(e){}})).catch(()=>{});
