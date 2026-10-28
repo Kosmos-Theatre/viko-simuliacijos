@@ -1,0 +1,275 @@
+<!doctype html>
+<html lang="lt">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Kultūros centras kaip sistema – kompleksiškumo mokyklos simuliacija</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
+<style>
+:root{--bg:#0c0f12;--surface:#13181d;--line:#232c34;--fg:#e8edf2;--muted:#8c9aa6;
+ --accent:#4fd1a5;--warn:#e8a33d;--bad:#e0564f;--amb:#7db7ff;
+ --fs:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+ --fm:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;color-scheme:dark}
+@media (prefers-color-scheme:light){:root:not([data-theme=dark]){--bg:#f2f4f6;--surface:#fff;--line:#d9e0e6;
+ --fg:#121820;--muted:#5d6b78;--accent:#12805d;--warn:#9a6611;--bad:#b03029;--amb:#2d6cb5;color-scheme:light}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--fs);line-height:1.5;
+ padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));
+ padding-block:20px 48px;max-width:620px;margin-inline:auto}
+h1{font-size:1.45rem;font-weight:600;margin:.1em 0 .3em;text-wrap:balance;letter-spacing:-.01em}
+h2{font-size:1.05rem;font-weight:600;margin:0}
+.eyebrow{font-family:var(--fm);font-size:.68rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin:0}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px}
+.mono{font-family:var(--fm);font-variant-numeric:tabular-nums}
+.muted{color:var(--muted)}.small{font-size:.83rem}
+button{font-family:var(--fs);font-size:.95rem;font-weight:500;color:var(--fg);background:var(--surface);
+ border:1px solid var(--line);border-radius:9px;padding:11px 15px;cursor:pointer}
+button:hover{border-color:var(--accent)}button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+button.primary{background:var(--accent);color:#07140f;border-color:var(--accent);font-weight:600}
+button[disabled]{opacity:.42;cursor:not-allowed}
+input,select{font-family:var(--fs);font-size:1rem;width:100%;min-width:0;background:var(--bg);color:var(--fg);
+ border:1px solid var(--line);border-radius:9px;padding:11px 12px}
+label.eyebrow{display:block;margin-bottom:5px}
+.grid{display:grid;gap:12px}
+.row{display:flex;gap:16px;flex-wrap:wrap;justify-content:space-between}
+.stat{display:flex;justify-content:space-between;font-family:var(--fm);font-size:.8rem;padding:1px 0}
+.bar{height:6px;border-radius:3px;background:rgba(127,127,127,.18);overflow:hidden;margin-top:2px}
+.bar i{display:block;height:100%;transition:width .45s ease}
+.move{display:block;width:100%;text-align:left;margin-bottom:8px;line-height:1.35}
+.move strong{display:block;font-size:.97rem}
+.move span{display:block;color:var(--muted);font-size:.8rem;margin-top:3px}
+.move.sel{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
+.badge{font-family:var(--fm);font-size:.68rem;letter-spacing:.1em;text-transform:uppercase;
+ border:1px solid var(--line);border-radius:999px;padding:3px 10px;color:var(--muted);white-space:nowrap}
+.shock{color:var(--warn);font-family:var(--fm);font-size:.82rem;margin:10px 0 0}
+canvas{width:100%;height:92px;display:block;border-radius:7px;background:rgba(127,127,127,.07);margin:4px 0 10px}
+.legend{display:flex;gap:12px;flex-wrap:wrap;font-family:var(--fm);font-size:.68rem;color:var(--muted)}
+.dot{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:4px;vertical-align:middle}
+.code{font-family:var(--fm);font-size:1.5rem;letter-spacing:.06em;text-align:center;padding:14px;
+ border:1px dashed var(--accent);border-radius:9px;margin:10px 0;word-break:break-all}
+hr{border:0;border-top:1px solid var(--line);margin:18px 0}
+ol{padding-left:1.1em}li{margin-bottom:6px}
+</style>
+</head>
+<body>
+
+<section id="v-join">
+  <p class="eyebrow">Strateginis valdymas · 09 · Kompleksiškumo mokykla</p>
+  <h1>Kultūros centras kaip sistema</h1>
+  <p class="muted">Šešis raundus valdote 140 žmonių bendruomenę. Rezultato nurodyti negalima — galima keisti tik tai, kas sistemą veikia.</p>
+  <div class="card grid">
+    <div><label class="eyebrow" for="gnum">Grupės numeris</label>
+      <select id="gnum"><option>1</option><option>2</option><option>3</option><option>4</option>
+      <option>5</option><option>6</option><option>7</option><option>8</option></select></div>
+    <div><label class="eyebrow" for="gname">Organizacijos pavadinimas</label>
+      <input id="gname" maxlength="28" placeholder="pvz. Šiaurės kultūros centras"></div>
+    <div><label class="eyebrow" for="scen">Aplinka (nurodo dėstytojas)</label>
+      <select id="scen"><option value="turbulentiskas" selected>Turbulentiška</option>
+      <option value="stabilus">Stabili</option></select></div>
+    <button class="primary" id="joinBtn">Pradėti</button>
+  </div>
+</section>
+
+<section id="v-play" hidden>
+  <div class="row" style="align-items:center">
+    <div><p class="eyebrow" id="who">—</p><h2 id="hRound">Raundas 1 iš 6</h2></div>
+    <span class="badge" id="badge">—</span>
+  </div>
+
+  <div class="card" style="margin-top:12px">
+    <canvas id="cv"></canvas>
+    <div class="legend">
+      <span><i class="dot" style="background:#3a4652"></i>Nežinantys</span>
+      <span><i class="dot" style="background:var(--warn)"></i>Lankytojai</span>
+      <span><i class="dot" style="background:var(--accent)"></i>Nuolatiniai</span>
+      <span><i class="dot" style="background:var(--amb)"></i>Ambasadoriai</span>
+      <span><i class="dot" style="background:var(--bad)"></i>Nusivylę</span>
+    </div>
+    <hr style="margin:12px 0">
+    <div class="row" style="gap:14px">
+      <div><div class="eyebrow">Nuolatiniai</div><div class="mono" id="mR" style="font-size:1.4rem">8</div></div>
+      <div><div class="eyebrow">Ambasadoriai</div><div class="mono" id="mA" style="font-size:1.4rem">2</div></div>
+      <div><div class="eyebrow">Nusivylę</div><div class="mono" id="mD" style="font-size:1.4rem">0</div></div>
+      <div><div class="eyebrow">Biudžetas</div><div class="mono" id="mB" style="font-size:1.4rem">100</div></div>
+    </div>
+    <div style="margin-top:10px">
+      <div class="stat"><span>Kokybė</span><span class="mono" id="qT">0.70</span></div><div class="bar"><i id="qB" style="width:70%"></i></div>
+      <div class="stat" style="margin-top:6px"><span>Reputacija</span><span class="mono" id="rT">0.50</span></div><div class="bar"><i id="rB" style="width:50%;background:var(--amb)"></i></div>
+    </div>
+    <p class="shock" id="shock" hidden></p>
+  </div>
+
+  <h3 style="margin:18px 0 8px;font-size:.95rem">Ką darote šį raundą?</h3>
+  <div id="moves"></div>
+  <button class="primary" id="goBtn" style="width:100%" disabled>Vykdyti raundą</button>
+  <p class="small muted" id="note" style="margin-top:10px">Vienas veiksmas per raundą. Pasekmė gali pasirodyti ne iš karto.</p>
+</section>
+
+<section id="v-end" hidden>
+  <p class="eyebrow">Simuliacija baigta</p>
+  <h1 id="endTitle">Rezultatas</h1>
+  <div class="card">
+    <canvas id="cv2"></canvas>
+    <div class="row" style="gap:14px">
+      <div><div class="eyebrow">Nuolatiniai</div><div class="mono" id="eR" style="font-size:1.4rem">—</div></div>
+      <div><div class="eyebrow">Ambasadoriai</div><div class="mono" id="eA" style="font-size:1.4rem">—</div></div>
+      <div><div class="eyebrow">Nusivylę</div><div class="mono" id="eD" style="font-size:1.4rem">—</div></div>
+      <div><div class="eyebrow">Rezultatas</div><div class="mono" id="eS" style="font-size:1.4rem">—</div></div>
+    </div>
+  </div>
+  <p class="eyebrow" style="margin-top:18px">Perduokite šį kodą dėstytojui</p>
+  <div class="code" id="code">—</div>
+  <button id="copyBtn" style="width:100%">Kopijuoti kodą</button>
+  <h3 style="margin:20px 0 6px;font-size:.95rem">Jūsų sprendimų eiga</h3>
+  <ol class="small muted" id="trace"></ol>
+  <button id="againBtn" style="width:100%;margin-top:10px">Žaisti iš naujo</button>
+</section>
+
+<script>
+/* ============ VARIKLIS ============ */
+var POP=140, ROUNDS=6;
+function mulberry32(a){return function(){a|=0;a=(a+0x6D2B79F5)|0;var t=Math.imul(a^(a>>>15),1|a);
+ t=(t+Math.imul(t^(t>>>7),61|t))^t;return ((t^(t>>>14))>>>0)/4294967296;};}
+function clamp(x,a,b){return Math.max(a,Math.min(b,x));}
+function initState(){return {U:112,V:18,R:8,A:2,D:0,B:100,C:30,Q:.70,Rep:.50,
+ ambBonus:0,qDebt:0,throttle:0,learn:0,pending:0,log:[]};}
+var MOVES={
+ valdymas:[
+  {id:'kampanija',name:'Reklamos kampanija',desc:'Tiesiogiai didinate srautą. Pajėgumai nesikeičia.',cost:12},
+  {id:'pajegumai',name:'Plėsti pajėgumus',desc:'+8 vietos. Fiksuotos išlaidos auga visam laikui.',cost:15},
+  {id:'isakymas',name:'Įsakyti kokybę',desc:'Nurodote komandai dirbti geriau. Kitą raundą — nuovargis.',cost:8},
+  {id:'kaina',name:'Kelti kainas',desc:'Greiti pinigai dabar. Reputacija krenta.',cost:0}],
+ apribojimai:[
+  {id:'taisykle',name:'Paprasta taisyklė',desc:'„Kiekvienas atėjęs pakviečia dar du." Kaupiasi per bendruomenę.',cost:4},
+  {id:'riba',name:'Apribojimas: 80 % talpos',desc:'Niekada neprigrūdate salės. Mažesnis srautas, stabili kokybė.',cost:2},
+  {id:'eksperimentas',name:'Safe-to-fail eksperimentas',desc:'Pigus bandymas. Gali nepavykti — ir tai normalu.',cost:6},
+  {id:'bendruomene',name:'Sprendimą atiduoti bendruomenei',desc:'Programą renka patys lankytojai. Efektas ateina vėliau.',cost:5}]};
+var SHOCKS={turbulentiskas:{
+  3:{name:'Finansavimas sumažėja 30 %',apply:function(s,m){s.B*=(1-.30*m);}},
+  5:{name:'Gretimai atsidaro konkurentas',apply:function(s,m){s.Rep-=.15*m;s.V*=(1-.20*m);}}},stabilus:{}};
+function step(st,moveId,mode,round,scenario,seed){
+ var s={};for(var k in st)s[k]=st[k]; s.log=st.log.slice();
+ var rnd=mulberry32(seed*7919+round*104729);
+ var ambMult=mode==='valdymas'?.5:1.65, shockMult=mode==='valdymas'?2.2:.55;
+ var demandBoost=0,qBoost=0,repDelta=0;
+ var list=MOVES[mode],mv=null;for(var i=0;i<list.length;i++)if(list[i].id===moveId)mv=list[i];
+ if(!mv)mv=list[0]; var cost=mv.cost;
+ qBoost+=s.pending;s.pending=0;qBoost-=s.qDebt;s.qDebt=0;
+ if(mv.id==='kampanija'){demandBoost+=.10;repDelta+=.02;}
+ else if(mv.id==='pajegumai'){s.C+=8;}
+ else if(mv.id==='isakymas'){qBoost+=.15;s.qDebt=.08;}
+ else if(mv.id==='kaina'){s.B+=15;repDelta-=.06;}
+ else if(mv.id==='taisykle'){s.ambBonus+=.0022;}
+ else if(mv.id==='riba'){s.throttle=.8;qBoost+=.05;}
+ else if(mv.id==='eksperimentas'){ if(rnd()<.6){repDelta+=.04;s.learn+=.012;s.note='Eksperimentas pavyko';}
+   else {s.note='Eksperimentas nepavyko — kaina maža';} }
+ else if(mv.id==='bendruomene'){s.pending=.05;s.ambBonus+=.0012;repDelta+=.03;}
+ var sh=(SHOCKS[scenario]||{})[round];
+ if(sh){sh.apply(s,shockMult);s.shock=sh.name;} else s.shock=null;
+ var effC=s.throttle?s.C*s.throttle:s.C;
+ var demand=s.V+s.R+s.A*1.2+(s.Rep+demandBoost)*s.U*.085;
+ var load=demand/Math.max(effC,1);
+ var qTarget=clamp((1.38-.55*load)*(.55+.45*s.Rep)+qBoost+s.learn,.10,1);
+ s.Q=clamp(s.Q+.5*(qTarget-s.Q),.05,1);
+ var recruit=s.Rep*.055+s.A*(.0045+s.ambBonus)*ambMult+demandBoost;
+ var uv=s.U*clamp(recruit,0,.35),vr=s.V*(s.Q*.36),vd=s.V*((1-s.Q)*.18),
+     ra=s.R*(s.Q*.13),rd=s.R*((1-s.Q)*.15),ar=s.A*((1-s.Q)*.32),du=s.D*.18;
+ s.U+=-uv+du;s.V+=uv-vr-vd;s.R+=vr-ra-rd+ar;s.A+=ra-ar;s.D+=vd+rd-du;
+ var income=s.V*.8+s.R*1.7+s.A*1.3;
+ s.B+=income-s.C*.5-demand*.28-cost;
+ if(s.B<0){s.C=Math.max(10,s.C-6);s.Rep-=.05;s.B=Math.max(s.B,-25);
+  s.note=(s.note?s.note+' · ':'')+'Biudžetas neigiamas — priverstiniai karpymai';}
+ if(scenario==='stabilus')s.Rep+=.012;
+ s.Rep=clamp(s.Rep+(s.Q-.62)*.09+s.A*.0025-s.D*.0022+repDelta,0,1);
+ var tot=s.U+s.V+s.R+s.A+s.D,k2=POP/tot;s.U*=k2;s.V*=k2;s.R*=k2;s.A*=k2;s.D*=k2;
+ s.throttle=mv.id==='riba'?.8:0;
+ return s;}
+function score(s){return Math.round(s.R*3+s.A*7+s.B*.2+s.Rep*50-s.D*2);}
+function modeOf(n){return n%2===1?'valdymas':'apribojimai';}
+var MODE_LABEL={valdymas:'Režimas A',apribojimai:'Režimas B'};
+
+/* ============ KODAS ============ */
+function makeCode(g,mode,scen,idxs){
+ var m=mode==='valdymas'?'A':'B', s=scen==='turbulentiskas'?'T':'S';
+ var body=idxs.join(''), sum=0; for(var i=0;i<body.length;i++)sum+=+body[i];
+ return g+'-'+m+s+'-'+body+'-'+(sum%9);
+}
+
+/* ============ BŪSENA IR VAIZDAS ============ */
+var S={g:1,name:'',mode:'valdymas',scen:'turbulentiskas',round:1,st:initState(),idxs:[],pick:null};
+function $(id){return document.getElementById(id);}
+function show(v){['join','play','end'].forEach(function(k){$('v-'+k).hidden=(k!==v);});}
+function cssv(v){return getComputedStyle(document.documentElement).getPropertyValue(v).trim()||'#888';}
+function swarm(cv,st){
+ var w=cv.clientWidth||300,h=92,dpr=Math.min(window.devicePixelRatio||1,2);
+ cv.width=w*dpr;cv.height=h*dpr;var c=cv.getContext('2d');
+ c.setTransform(dpr,0,0,dpr,0,0);c.clearRect(0,0,w,h);
+ var cols=20,rows=Math.ceil(POP/cols),cw=w/cols,ch=h/rows,r=Math.max(2,Math.min(cw,ch)/2-1.5),i=0;
+ [['U','#3a4652'],['V',cssv('--warn')],['R',cssv('--accent')],['A',cssv('--amb')],['D',cssv('--bad')]]
+ .forEach(function(p){var n=Math.round(st[p[0]]);c.fillStyle=p[1];
+  for(var j=0;j<n&&i<POP;j++,i++){var x=(i%cols)*cw+cw/2,y=Math.floor(i/cols)*ch+ch/2;
+   c.beginPath();c.arc(x,y,r,0,6.284);c.fill();}});
+}
+function renderMoves(){
+ var box=$('moves');box.innerHTML='';
+ MOVES[S.mode].forEach(function(m){
+  var b=document.createElement('button');
+  b.className='move'+(S.pick===m.id?' sel':'');
+  b.innerHTML='<strong>'+m.name+'</strong><span>'+m.desc+(m.cost?' · kaina '+m.cost:'')+'</span>';
+  b.onclick=function(){S.pick=m.id;renderMoves();$('goBtn').disabled=false;};
+  box.appendChild(b);});
+}
+function renderPlay(){
+ $('who').textContent=S.g+' grupė · '+S.name;
+ $('hRound').textContent='Raundas '+S.round+' iš '+ROUNDS;
+ $('badge').textContent=MODE_LABEL[S.mode];
+ var st=S.st;
+ $('mR').textContent=Math.round(st.R);$('mA').textContent=Math.round(st.A);
+ $('mD').textContent=Math.round(st.D);$('mB').textContent=Math.round(st.B);
+ $('qT').textContent=st.Q.toFixed(2);$('rT').textContent=st.Rep.toFixed(2);
+ $('qB').style.width=(st.Q*100)+'%';$('rB').style.width=(st.Rep*100)+'%';
+ $('qB').style.background=st.Q<.4?'var(--bad)':st.Q<.6?'var(--warn)':'var(--accent)';
+ var msg=[];if(st.shock)msg.push('⚡ '+st.shock);if(st.note)msg.push(st.note);
+ $('shock').hidden=!msg.length;$('shock').textContent=msg.join(' · ');
+ swarm($('cv'),st);renderMoves();$('goBtn').disabled=!S.pick;
+}
+function renderEnd(){
+ var st=S.st;$('endTitle').textContent=S.name;
+ $('eR').textContent=Math.round(st.R);$('eA').textContent=Math.round(st.A);
+ $('eD').textContent=Math.round(st.D);$('eS').textContent=score(st);
+ $('code').textContent=makeCode(S.g,S.mode,S.scen,S.idxs);
+ swarm($('cv2'),st);
+ var ol=$('trace');ol.innerHTML='';
+ S.idxs.forEach(function(ix,i){var li=document.createElement('li');
+  li.textContent='R'+(i+1)+': '+MOVES[S.mode][ix-1].name;ol.appendChild(li);});
+}
+$('joinBtn').onclick=function(){
+ S.g=+$('gnum').value;S.name=($('gname').value||('Grupė '+$('gnum').value)).slice(0,28);
+ S.mode=modeOf(S.g);S.scen=$('scen').value;S.round=1;S.st=initState();S.idxs=[];S.pick=null;
+ show('play');renderPlay();
+};
+$('goBtn').onclick=function(){
+ if(!S.pick)return;
+ var list=MOVES[S.mode],ix=0;for(var i=0;i<list.length;i++)if(list[i].id===S.pick)ix=i+1;
+ S.idxs.push(ix);
+ S.st=step(S.st,S.pick,S.mode,S.round,S.scen,S.g);
+ S.pick=null;
+ if(S.round>=ROUNDS){show('end');renderEnd();}
+ else {S.round++;renderPlay();window.scrollTo({top:0,behavior:'smooth'});}
+};
+$('copyBtn').onclick=function(){
+ var t=$('code').textContent;
+ if(navigator.clipboard&&navigator.clipboard.writeText){
+  navigator.clipboard.writeText(t).then(function(){$('copyBtn').textContent='Nukopijuota';
+   setTimeout(function(){$('copyBtn').textContent='Kopijuoti kodą';},1800);},sel);
+ } else sel();
+ function sel(){var r=document.createRange();r.selectNodeContents($('code'));
+  var s=getSelection();s.removeAllRanges();s.addRange(r);$('copyBtn').textContent='Pažymėta — kopijuokite';}
+};
+$('againBtn').onclick=function(){show('join');};
+window.addEventListener('resize',function(){
+ if(!$('v-play').hidden)swarm($('cv'),S.st);
+ if(!$('v-end').hidden)swarm($('cv2'),S.st);});
+</script>
+</body>
+</html>
